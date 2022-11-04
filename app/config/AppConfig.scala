@@ -19,8 +19,11 @@ package config
 import javax.inject.{Inject, Singleton}
 import play.api.Configuration
 
+import scala.concurrent.duration.Duration
+
 @Singleton
 class AppConfig @Inject()(config: Configuration) {
 
   val appName: String = config.get[String]("appName")
+  val userDataTtlInDays: Int = config.get[Int]("mongodb.userDataTtlInDays")
 }
