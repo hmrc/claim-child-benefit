@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.claimchildbenefit.config
+package config
 
 import com.google.inject.AbstractModule
 
