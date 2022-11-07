@@ -145,4 +145,37 @@ class UserDataControllerSpec
       status(result) mustEqual BAD_REQUEST
     }
   }
+
+  ".keepAlive" - {
+
+    "must return No Content when data is kept alive" in {
+
+      when(mockRepo.keepAlive(eqTo(userId))) thenReturn Future.successful(Done)
+
+      val request =
+        FakeRequest(POST, routes.UserDataController.keepAlive.url)
+          .withHeaders(
+            HeaderNames.xSessionId -> "foo",
+            "Content-Type" -> "application/json"
+          )
+          .withBody(Json.toJson(userData))
+
+      val result = route(app, request).value
+
+      status(result) mustEqual NO_CONTENT
+      verify(mockRepo, times(1)).keepAlive(eqTo(userId))
+    }
+
+    "must return Bad Request when the request does not have a session id" in {
+
+      val request =
+        FakeRequest(POST, routes.UserDataController.keepAlive.url)
+          .withHeaders("Content-Type" -> "application/json")
+          .withBody(Json.toJson(userData))
+
+      val result = route(app, request).value
+
+      status(result) mustEqual BAD_REQUEST
+    }
+  }
 }

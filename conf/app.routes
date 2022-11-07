@@ -2,3 +2,4 @@
 
 GET         /user-data              controllers.UserDataController.get
 POST        /user-data              controllers.UserDataController.set
+POST        /user-data/keep-alive   controllers.UserDataController.keepAlive
