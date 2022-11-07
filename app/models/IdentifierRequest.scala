@@ -14,23 +14,8 @@
  * limitations under the License.
  */
 
-package controllers
+package models
 
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpec
-import play.api.http.Status
-import play.api.test.Helpers._
-import play.api.test.{FakeRequest, Helpers}
+import play.api.mvc.{Request, WrappedRequest}
 
-class MicroserviceHelloWorldControllerSpec extends AnyWordSpec with Matchers {
-
-  private val fakeRequest = FakeRequest("GET", "/")
-  private val controller = new MicroserviceHelloWorldController(Helpers.stubControllerComponents())
-
-  "GET /" should {
-    "return 200" in {
-      val result = controller.hello()(fakeRequest)
-      status(result) shouldBe Status.OK
-    }
-  }
-}
+final case class IdentifierRequest[A](request: Request[A], userId: String) extends WrappedRequest[A](request)
