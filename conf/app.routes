@@ -2,4 +2,6 @@
 
 GET         /user-data              controllers.UserDataController.get
 POST        /user-data              controllers.UserDataController.set
+DELETE      /user-data              controllers.UserDataController.clear
+
 POST        /user-data/keep-alive   controllers.UserDataController.keepAlive

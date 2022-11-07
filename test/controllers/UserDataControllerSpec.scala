@@ -154,10 +154,7 @@ class UserDataControllerSpec
 
       val request =
         FakeRequest(POST, routes.UserDataController.keepAlive.url)
-          .withHeaders(
-            HeaderNames.xSessionId -> "foo",
-            "Content-Type" -> "application/json"
-          )
+          .withHeaders(HeaderNames.xSessionId -> "foo")
           .withBody(Json.toJson(userData))
 
       val result = route(app, request).value
@@ -170,7 +167,34 @@ class UserDataControllerSpec
 
       val request =
         FakeRequest(POST, routes.UserDataController.keepAlive.url)
-          .withHeaders("Content-Type" -> "application/json")
+          .withBody(Json.toJson(userData))
+
+      val result = route(app, request).value
+
+      status(result) mustEqual BAD_REQUEST
+    }
+  }
+
+  ".clear" - {
+
+    "must return No Content when data is cleared" in {
+
+      when(mockRepo.clear(eqTo(userId))) thenReturn Future.successful(Done)
+
+      val request =
+        FakeRequest(DELETE, routes.UserDataController.clear.url)
+          .withHeaders(HeaderNames.xSessionId -> "foo")
+
+      val result = route(app, request).value
+
+      status(result) mustEqual NO_CONTENT
+      verify(mockRepo, times(1)).clear(eqTo(userId))
+    }
+
+    "must return Bad Request when the request does not have a session id" in {
+
+      val request =
+        FakeRequest(DELETE, routes.UserDataController.clear.url)
           .withBody(Json.toJson(userData))
 
       val result = route(app, request).value

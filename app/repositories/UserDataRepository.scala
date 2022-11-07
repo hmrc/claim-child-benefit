@@ -83,4 +83,10 @@ class UserDataRepository @Inject()(
       .toFuture
       .map(_ => Done)
   }
+
+  def clear(id: String): Future[Done] =
+    collection
+      .deleteOne(byId(id))
+      .toFuture
+      .map(_ => Done)
 }

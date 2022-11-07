@@ -56,4 +56,11 @@ class UserDataController @Inject()(
         .keepAlive(request.userId)
         .map(_ => NoContent)
   }
+
+  def clear: Action[AnyContent] = identify.async {
+    request =>
+      repository
+        .clear(request.userId)
+        .map(_ => NoContent)
+  }
 }
