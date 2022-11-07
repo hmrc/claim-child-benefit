@@ -17,7 +17,7 @@
 package repositories
 
 import config.AppConfig
-import models.UserData
+import models.{Done, UserData}
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes, ReplaceOptions, Updates}
 import play.api.libs.json.Format
@@ -53,14 +53,14 @@ class UserDataRepository @Inject()(
 
   private def byId(id: String): Bson = Filters.equal("_id", id)
 
-  def keepAlive(id: String): Future[Boolean] =
+  def keepAlive(id: String): Future[Done] =
     collection
       .updateOne(
         filter = byId(id),
         update = Updates.set("lastUpdated", Instant.now(clock)),
       )
       .toFuture
-      .map(_ => true)
+      .map(_ => Done)
 
   def get(id: String): Future[Option[UserData]] =
     keepAlive(id).flatMap {
@@ -70,7 +70,7 @@ class UserDataRepository @Inject()(
           .headOption
     }
 
-  def set(userData: UserData): Future[Boolean] = {
+  def set(userData: UserData): Future[Done] = {
 
     val updatedUserData = userData copy (lastUpdated = Instant.now(clock))
 
@@ -81,6 +81,6 @@ class UserDataRepository @Inject()(
         options = ReplaceOptions().upsert(true)
       )
       .toFuture
-      .map(_ => true)
+      .map(_ => Done)
   }
 }

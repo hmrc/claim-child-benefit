@@ -16,7 +16,7 @@
 
 package controllers
 
-import models.UserData
+import models.{Done, UserData}
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
@@ -31,6 +31,7 @@ import play.api.test.Helpers._
 import repositories.UserDataRepository
 import uk.gov.hmrc.http.HeaderNames
 
+import java.time.temporal.ChronoUnit
 import java.time.{Clock, Instant, ZoneId}
 import scala.concurrent.Future
 
@@ -44,6 +45,11 @@ class UserDataControllerSpec
 
   private val mockRepo = mock[UserDataRepository]
 
+  private val instant   = Instant.now.truncatedTo(ChronoUnit.MILLIS)
+  private val stubClock = Clock.fixed(instant, ZoneId.systemDefault)
+  private val userId    = "foo"
+  private val userData  = UserData(userId, Json.obj("bar" -> "baz"), Instant.now(stubClock))
+
   override def beforeEach(): Unit = {
     reset(mockRepo)
     super.beforeEach()
@@ -54,10 +60,6 @@ class UserDataControllerSpec
   ".get" - {
 
     "must return OK and the data when user data can be found for this session id" in {
-
-      val clock    = Clock.fixed(Instant.now, ZoneId.systemDefault())
-      val userId   = "foo"
-      val userData = UserData(userId, Json.obj(), Instant.now(clock))
 
       when(mockRepo.get(eqTo(userId))) thenReturn Future.successful(Some(userData))
 
@@ -86,9 +88,57 @@ class UserDataControllerSpec
 
     "must return Bad Request when the request does not have a session id" in {
 
-      when(mockRepo.get(any())) thenReturn Future.successful(None)
-
       val request = FakeRequest(GET, routes.UserDataController.get.url)
+
+      val result = route(app, request).value
+
+      status(result) mustEqual BAD_REQUEST
+    }
+  }
+
+  ".set" - {
+
+    "must return No Content when the data is successfully saved" in {
+
+      when(mockRepo.set(any())) thenReturn Future.successful(Done)
+
+      val request =
+        FakeRequest(POST, routes.UserDataController.set.url)
+          .withHeaders(
+            HeaderNames.xSessionId -> "foo",
+            "Content-Type"         -> "application/json"
+          )
+          .withBody(Json.toJson(userData).toString)
+
+      val result = route(app, request).value
+
+      status(result) mustEqual NO_CONTENT
+      verify(mockRepo, times(1)).set(eqTo(userData))
+    }
+
+    "must return Bad Request when the request does not have a session id" in {
+
+      val request =
+        FakeRequest(POST, routes.UserDataController.set.url)
+          .withHeaders("Content-Type" -> "application/json")
+          .withBody(Json.toJson(userData))
+
+      val result = route(app, request).value
+
+      status(result) mustEqual BAD_REQUEST
+    }
+
+    "must return Bad Request when the request cannot be parsed as UserData" in {
+
+      val badPayload = Json.obj("foo" -> "bar")
+
+      val request =
+        FakeRequest(POST, routes.UserDataController.set.url)
+          .withHeaders(
+            HeaderNames.xSessionId -> "foo",
+            "Content-Type"         -> "application/json"
+          )
+          .withBody(badPayload)
 
       val result = route(app, request).value
 

@@ -3,3 +3,4 @@
 GET        /hello-world             controllers.MicroserviceHelloWorldController.hello
 
 GET         /user-data              controllers.UserDataController.get
+POST        /user-data              controllers.UserDataController.set

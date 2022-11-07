@@ -17,7 +17,7 @@
 package repositories
 
 import config.AppConfig
-import models.UserData
+import models.{Done, UserData}
 import org.mockito.MockitoSugar
 import org.mongodb.scala.model.Filters
 import org.scalatest.OptionValues
@@ -62,7 +62,7 @@ class UserDataRepositorySpec
       val setResult = repository.set(userData).futureValue
       val updatedRecord = find(Filters.equal("_id", userData.id)).futureValue.headOption.value
 
-      setResult mustEqual true
+      setResult mustEqual Done
       updatedRecord mustEqual expectedResult
     }
   }

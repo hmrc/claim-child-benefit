@@ -17,6 +17,7 @@
 package controllers
 
 import controllers.actions.IdentifierAction
+import models.UserData
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import repositories.UserDataRepository
@@ -40,5 +41,12 @@ class UserDataController @Inject()(
           _.map(userData => Ok(Json.toJson(userData)))
             .getOrElse(NotFound)
         }
+  }
+
+  def set: Action[UserData] = identify(parse.json[UserData]).async {
+    request =>
+      repository
+        .set(request.body)
+        .map(_ => NoContent)
   }
 }
