@@ -19,22 +19,35 @@ package controllers.actions
 import models.IdentifierRequest
 import play.api.mvc.Results.BadRequest
 import play.api.mvc.{ActionBuilder, ActionFunction, AnyContent, BodyParsers, Request, Result}
+import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions, NoActiveSession}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class IdentifierAction @Inject()(val parser: BodyParsers.Default)
-                                (implicit val executionContext: ExecutionContext)
-  extends ActionBuilder[IdentifierRequest, AnyContent] with ActionFunction[Request, IdentifierRequest]{
+class IdentifierAction @Inject()(
+                                  val authConnector: AuthConnector,
+                                  val parser: BodyParsers.Default
+                                )(implicit val executionContext: ExecutionContext)
+  extends ActionBuilder[IdentifierRequest, AnyContent] with ActionFunction[Request, IdentifierRequest] with AuthorisedFunctions {
 
   override def invokeBlock[A](request: Request[A], block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
 
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
-    hc.sessionId
-      .map(sessionId => block(IdentifierRequest(request, sessionId.value)))
-      .getOrElse(Future.successful(BadRequest))
+    authorised().retrieve(Retrievals.internalId) {
+      case Some(internalId) =>
+        block(IdentifierRequest(request, internalId))
+
+      case _ =>
+        Future.successful(BadRequest)
+    }.recoverWith {
+      case _: NoActiveSession =>
+        hc.sessionId
+          .map(sessionId => block(IdentifierRequest(request, sessionId.value)))
+          .getOrElse(Future.successful(BadRequest))
+    }
   }
 }

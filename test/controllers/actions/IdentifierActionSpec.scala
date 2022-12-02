@@ -19,10 +19,17 @@ package controllers.actions
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.{Action, AnyContent, Results}
+import play.api.mvc.{Action, AnyContent, BodyParsers, Results}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.http.HeaderNames
+import uk.gov.hmrc.auth.core.authorise.Predicate
+import uk.gov.hmrc.auth.core.retrieve.Retrieval
+import uk.gov.hmrc.auth.core.{AuthConnector, MissingBearerToken}
+import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames}
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 class IdentifierActionSpec extends AnyFreeSpec with Matchers {
 
@@ -32,28 +39,26 @@ class IdentifierActionSpec extends AnyFreeSpec with Matchers {
 
   "identify" - {
 
-    "must execute the request when the request has a session id" in {
+  val app = new GuiceApplicationBuilder().build()
+  val bodyParsers = app.injector.instanceOf[BodyParsers.Default]
 
-      val app = new GuiceApplicationBuilder().build()
+    "when the user is authenticated" - {
 
-      running(app) {
-        val identifierAction = app.injector.instanceOf[IdentifierAction]
-        val controller       = new Harness(identifierAction)
+      "must execute the request when an internal Id can be retrieved" in {
 
-        val request = FakeRequest().withHeaders(HeaderNames.xSessionId -> "foo")
+        val identifierAction = new IdentifierAction(new FakeAuthConnector(Some("internalId")), bodyParsers)
+        val controller = new Harness(identifierAction)
+
+        val request = FakeRequest()
 
         val result = controller.get()(request)
 
         status(result) mustEqual OK
       }
-    }
 
-    "must return Bad Request when the request does not have a session id" in {
+      "must return BadRequest when no internalId can be retrieved" in {
 
-      val app = new GuiceApplicationBuilder().build()
-
-      running(app) {
-        val identifierAction = app.injector.instanceOf[IdentifierAction]
+        val identifierAction = new IdentifierAction(new FakeAuthConnector(None), bodyParsers)
         val controller = new Harness(identifierAction)
 
         val request = FakeRequest()
@@ -63,5 +68,42 @@ class IdentifierActionSpec extends AnyFreeSpec with Matchers {
         status(result) mustEqual BAD_REQUEST
       }
     }
+
+    "when the user is not authenticated" - {
+
+      "must execute the request when the request has a session id" in {
+
+        val identifierAction = new IdentifierAction(new FakeFailingAuthConnector(MissingBearerToken()), bodyParsers)
+        val controller = new Harness(identifierAction)
+
+        val request = FakeRequest().withHeaders(HeaderNames.xSessionId -> "foo")
+
+        val result = controller.get()(request)
+
+        status(result) mustEqual OK
+      }
+
+      "must return Bad Request when the request does not have a session id" in {
+
+        val identifierAction = new IdentifierAction(new FakeFailingAuthConnector(MissingBearerToken()), bodyParsers)
+        val controller = new Harness(identifierAction)
+
+        val request = FakeRequest()
+
+        val result = controller.get()(request)
+
+        status(result) mustEqual BAD_REQUEST
+      }
+    }
+  }
+
+  class FakeAuthConnector[T](value: T) extends AuthConnector {
+    override def authorise[A](predicate: Predicate, retrieval: Retrieval[A])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[A] =
+      Future.fromTry(Try(value.asInstanceOf[A]))
+  }
+
+  class FakeFailingAuthConnector(exceptionToReturn: Throwable) extends AuthConnector {
+    override def authorise[A](predicate: Predicate, retrieval: Retrieval[A])(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[A] =
+      Future.failed(exceptionToReturn)
   }
 }
