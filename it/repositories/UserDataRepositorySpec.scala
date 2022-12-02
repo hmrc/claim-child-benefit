@@ -90,4 +90,50 @@ class UserDataRepositorySpec
       }
     }
   }
+
+  ".clear" - {
+
+    "must remove a record" in {
+
+      insert(userData).futureValue
+
+      val result = repository.clear(userData.id).futureValue
+
+      result mustEqual Done
+      repository.get(userData.id).futureValue must not be defined
+    }
+
+    "must return Done when there is no record to remove" in {
+      val result = repository.clear("id that does not exist").futureValue
+
+      result mustEqual Done
+    }
+  }
+
+  ".keepAlive" - {
+
+    "when there is a record for this id" - {
+
+      "must update its lastUpdated to `now` and return true" in {
+
+        insert(userData).futureValue
+
+        val result = repository.keepAlive(userData.id).futureValue
+
+        val expectedUpdatedAnswers = userData copy (lastUpdated = instant)
+
+        result mustEqual Done
+        val updatedAnswers = find(Filters.equal("_id", userData.id)).futureValue.headOption.value
+        updatedAnswers mustEqual expectedUpdatedAnswers
+      }
+    }
+
+    "when there is no record for this id" - {
+
+      "must return true" in {
+
+        repository.keepAlive("id that does not exist").futureValue mustEqual Done
+      }
+    }
+  }
 }

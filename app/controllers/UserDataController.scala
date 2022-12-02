@@ -49,4 +49,18 @@ class UserDataController @Inject()(
         .set(request.body)
         .map(_ => NoContent)
   }
+
+  def keepAlive: Action[AnyContent] = identify.async {
+    request =>
+      repository
+        .keepAlive(request.userId)
+        .map(_ => NoContent)
+  }
+
+  def clear: Action[AnyContent] = identify.async {
+    request =>
+      repository
+        .clear(request.userId)
+        .map(_ => NoContent)
+  }
 }
