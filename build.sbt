@@ -12,8 +12,20 @@ lazy val microservice = Project("claim-child-benefit", file("."))
     scalacOptions += "-Wconf:src=routes/.*:s",
   )
   .settings(publishingSettings: _*)
+  .settings(inConfig(Test)(testSettings): _*)
   .configs(IntegrationTest)
   .settings(integrationTestSettings(): _*)
+  .settings(inConfig(IntegrationTest)(itSettings): _*)
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(CodeCoverageSettings.settings: _*)
   .settings(PlayKeys.playDefaultPort := 11305)
+
+lazy val testSettings: Seq[Def.Setting[_]] = Seq(
+  unmanagedSourceDirectories += baseDirectory.value / "test-utils" / "src",
+  unmanagedResourceDirectories += baseDirectory.value / "test-utils" / "resources"
+)
+
+lazy val itSettings: Seq[Def.Setting[_]] = Seq(
+  unmanagedSourceDirectories += baseDirectory.value / "test-utils" / "src",
+  unmanagedResourceDirectories += baseDirectory.value / "test-utils" / "resources"
+)
