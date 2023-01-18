@@ -20,6 +20,7 @@ import models.IdentifierRequest
 import play.api.mvc.Results.BadRequest
 import play.api.mvc.{ActionBuilder, ActionFunction, AnyContent, BodyParsers, Request, Result}
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
+import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions, NoActiveSession}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
@@ -37,16 +38,16 @@ class IdentifierAction @Inject()(
 
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
-    authorised().retrieve(Retrievals.internalId) {
-      case Some(internalId) =>
-        block(IdentifierRequest(request, internalId))
+    authorised().retrieve(Retrievals.internalId and Retrievals.nino) {
+      case Some(internalId) ~ nino =>
+        block(IdentifierRequest(request, internalId, nino))
 
       case _ =>
         Future.successful(BadRequest)
     }.recoverWith {
       case _: NoActiveSession =>
         hc.sessionId
-          .map(sessionId => block(IdentifierRequest(request, sessionId.value)))
+          .map(sessionId => block(IdentifierRequest(request, sessionId.value, None)))
           .getOrElse(Future.successful(BadRequest))
     }
   }

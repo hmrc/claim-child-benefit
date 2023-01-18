@@ -23,9 +23,10 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import repositories.UserDataRepository
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import javax.inject.Inject
+import javax.inject.{Singleton, Inject}
 import scala.concurrent.ExecutionContext
 
+@Singleton
 class UserDataController @Inject()(
                                     cc: ControllerComponents,
                                     identify: IdentifierAction,

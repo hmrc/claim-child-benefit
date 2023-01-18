@@ -19,11 +19,12 @@ package controllers.actions
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.mvc.{Action, AnyContent, BodyParsers, Results}
+import play.api.mvc.Results.Ok
+import play.api.mvc.{Action, AnyContent, BodyParsers}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core.authorise.Predicate
-import uk.gov.hmrc.auth.core.retrieve.Retrieval
+import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
 import uk.gov.hmrc.auth.core.{AuthConnector, MissingBearerToken}
 import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames}
 
@@ -34,7 +35,9 @@ import scala.util.Try
 class IdentifierActionSpec extends AnyFreeSpec with Matchers {
 
   class Harness(identify: IdentifierAction) {
-    def get(): Action[AnyContent] = identify { _ => Results.Ok }
+    def get(): Action[AnyContent] = identify { request =>
+      Ok(request.nino.mkString)
+    }
   }
 
   "identify" - {
@@ -46,7 +49,7 @@ class IdentifierActionSpec extends AnyFreeSpec with Matchers {
 
       "must execute the request when an internal Id can be retrieved" in {
 
-        val identifierAction = new IdentifierAction(new FakeAuthConnector(Some("internalId")), bodyParsers)
+        val identifierAction = new IdentifierAction(new FakeAuthConnector(new ~(Some("internalId"), Some("nino"))), bodyParsers)
         val controller = new Harness(identifierAction)
 
         val request = FakeRequest()
@@ -54,11 +57,25 @@ class IdentifierActionSpec extends AnyFreeSpec with Matchers {
         val result = controller.get()(request)
 
         status(result) mustEqual OK
+        contentAsString(result) mustEqual "nino"
+      }
+
+      "must execute the request when an internal Id can be retrieved but there is no nino" in {
+
+        val identifierAction = new IdentifierAction(new FakeAuthConnector(new ~(Some("internalId"), None)), bodyParsers)
+        val controller = new Harness(identifierAction)
+
+        val request = FakeRequest()
+
+        val result = controller.get()(request)
+
+        status(result) mustEqual OK
+        contentAsString(result) mustEqual ""
       }
 
       "must return BadRequest when no internalId can be retrieved" in {
 
-        val identifierAction = new IdentifierAction(new FakeAuthConnector(None), bodyParsers)
+        val identifierAction = new IdentifierAction(new FakeAuthConnector(new ~(None, Some("nino"))), bodyParsers)
         val controller = new Harness(identifierAction)
 
         val request = FakeRequest()

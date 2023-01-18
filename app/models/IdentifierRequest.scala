@@ -17,5 +17,6 @@
 package models
 
 import play.api.mvc.{Request, WrappedRequest}
+import uk.gov.hmrc.auth.core.Nino
 
-final case class IdentifierRequest[A](request: Request[A], userId: String) extends WrappedRequest[A](request)
+final case class IdentifierRequest[A](request: Request[A], userId: String, nino: Option[String]) extends WrappedRequest[A](request)
