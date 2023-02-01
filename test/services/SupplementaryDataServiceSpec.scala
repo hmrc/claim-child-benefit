@@ -21,8 +21,7 @@ import akka.util.ByteString
 import better.files.File
 import connectors.SdesConnector
 import models.Done
-import models.dmsa.Metadata
-import models.submission.{ObjectSummary, SubmissionItem, SubmissionItemStatus}
+import models.dmsa.{Metadata, ObjectSummary, SubmissionItem, SubmissionItemStatus}
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.{ArgumentCaptor, Mockito, MockitoSugar}
 import org.scalatest.BeforeAndAfterEach

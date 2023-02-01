@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package models.submission
+package models.dmsa
 
 import play.api.libs.json._
 import play.api.mvc.QueryStringBindable

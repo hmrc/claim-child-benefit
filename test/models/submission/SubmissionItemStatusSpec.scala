@@ -16,6 +16,7 @@
 
 package models.submission
 
+import models.dmsa.SubmissionItemStatus
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers

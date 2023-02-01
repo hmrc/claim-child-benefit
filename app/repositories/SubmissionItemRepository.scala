@@ -17,7 +17,7 @@
 package repositories
 
 import models.Done
-import models.submission.{SubmissionItem, SubmissionItemStatus}
+import models.dmsa.{SubmissionItem, SubmissionItemStatus}
 import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes}
 import play.api.Configuration
 import uk.gov.hmrc.mongo.MongoComponent

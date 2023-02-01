@@ -16,8 +16,7 @@
 
 package repositories
 
-import models.dmsa.Metadata
-import models.submission.{ObjectSummary, SubmissionItem, SubmissionItemStatus}
+import models.dmsa.{Metadata, ObjectSummary, SubmissionItem, SubmissionItemStatus}
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec

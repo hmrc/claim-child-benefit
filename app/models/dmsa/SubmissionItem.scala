@@ -14,20 +14,26 @@
  * limitations under the License.
  */
 
-package models.submission
+package models.dmsa
 
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import java.time.Instant
 
-final case class ObjectSummary(
-                                location: String,
-                                contentLength: Long,
-                                contentMd5: String,
-                                lastModified: Instant
-                              )
+final case class SubmissionItem(
+                                 id: String,
+                                 status: SubmissionItemStatus,
+                                 objectSummary: ObjectSummary,
+                                 failureReason: Option[String],
+                                 metadata: Metadata,
+                                 sdesCorrelationId: String,
+                                 created: Instant,
+                                 lastUpdated: Instant,
+                                 lockedAt: Option[Instant] = None
+                               )
 
-object ObjectSummary extends MongoJavatimeFormats.Implicits {
-  implicit lazy val format: OFormat[ObjectSummary] = Json.format
+object SubmissionItem extends MongoJavatimeFormats.Implicits {
+
+  implicit lazy val format: OFormat[SubmissionItem] = Json.format
 }

@@ -18,9 +18,8 @@ package services
 
 import connectors.SdesConnector
 import models.Done
-import models.dmsa.Metadata
+import models.dmsa.{Metadata, ObjectSummary, SubmissionItem, SubmissionItemStatus}
 import models.sdes.{FileAudit, FileChecksum, FileMetadata, FileNotifyRequest, FileProperty}
-import models.submission.{ObjectSummary, SubmissionItem, SubmissionItemStatus}
 import play.api.Configuration
 import repositories.SubmissionItemRepository
 import uk.gov.hmrc.http.HeaderCarrier
