@@ -17,13 +17,14 @@
 package repositories
 
 import models.Done
-import models.dmsa.{SubmissionItem, SubmissionItemStatus}
-import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes}
+import models.dmsa.{QueryResult, SubmissionItem, SubmissionItemStatus}
+import org.bson.conversions.Bson
+import org.mongodb.scala.model.{Filters, FindOneAndUpdateOptions, IndexModel, IndexOptions, Indexes, Sorts, Updates}
 import play.api.Configuration
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
-import java.time.Clock
+import java.time.{Clock, Duration}
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -67,6 +68,8 @@ class SubmissionItemRepository @Inject() (
       Codecs.playFormatSumCodecs(SubmissionItemStatus.format)
   ) {
 
+  private val lockTtl: Duration = Duration.ofSeconds(configuration.get[Int]("lock-ttl"))
+
   def insert(item: SubmissionItem): Future[Done] =
     collection.insertOne(item.copy(lastUpdated = clock.instant()))
       .toFuture()
@@ -74,4 +77,37 @@ class SubmissionItemRepository @Inject() (
 
   def get(id: String): Future[Option[SubmissionItem]] =
     collection.find(Filters.equal("id", id)).headOption()
+
+  def lockAndReplaceOldestItemByStatus(status: SubmissionItemStatus)(f: SubmissionItem => Future[SubmissionItem]): Future[QueryResult] =
+    lockAndReplace(
+      filter = Filters.equal("status", status),
+      sort = Sorts.ascending("lastUpdated")
+    )(f)
+
+  private def lockAndReplace(filter: Bson, sort: Bson)(f: SubmissionItem => Future[SubmissionItem]): Future[QueryResult] =
+    collection.findOneAndUpdate(
+      filter = Filters.and(
+        filter,
+        Filters.or(
+          Filters.exists("lockedAt", exists = false),
+          Filters.lt("lockedAt", clock.instant().minus(lockTtl))
+        )
+      ),
+      update = Updates.set("lockedAt", clock.instant()),
+      options = FindOneAndUpdateOptions().sort(sort)
+    ).headOption().flatMap {
+      _.map { item =>
+        f(item)
+          .flatMap { updatedItem =>
+            collection.replaceOne(
+              filter = Filters.equal("sdesCorrelationId", item.sdesCorrelationId),
+              replacement = updatedItem.copy(
+                lastUpdated = clock.instant(),
+                lockedAt = None
+              )
+            ).toFuture()
+          }
+          .map(_ => QueryResult.Found)
+      }.getOrElse(Future.successful(QueryResult.NotFound))
+    }
 }

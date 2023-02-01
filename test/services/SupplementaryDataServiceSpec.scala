@@ -103,21 +103,6 @@ class SupplementaryDataServiceSpec extends AnyFreeSpec with Matchers with Mockit
       sdesCorrelationId = "correlationId"
     )
 
-//    val expectedRequest = FileNotifyRequest(
-//      "information-type",
-//      FileMetadata(
-//        recipientOrSender = "recipient-or-sender",
-//        name = "requestId.pdf",
-//        location = s"http://prefix/${Path.Directory("sdes").file("requestId.pdf").asUri}",
-//        checksum = FileChecksum("md5", value = "85ab21"),
-//        size = 1337,
-//        properties = List(
-//          FileProperty("nino", "foobar")
-//        )
-//      ),
-//      FileAudit("requestId")
-//    )
-
     "must store the file in object store and notify SDES" in {
 
       val submissionItemCaptor: ArgumentCaptor[SubmissionItem] =

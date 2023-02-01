@@ -16,20 +16,17 @@
 
 package services
 
-import connectors.SdesConnector
 import models.Done
 import models.dmsa.{Metadata, ObjectSummary, SubmissionItem, SubmissionItemStatus}
-import models.sdes.{FileAudit, FileChecksum, FileMetadata, FileNotifyRequest, FileProperty}
-import play.api.Configuration
 import repositories.SubmissionItemRepository
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.objectstore.client.{ObjectSummaryWithMd5, Path}
-import uk.gov.hmrc.objectstore.client.play.PlayObjectStoreClient
 import uk.gov.hmrc.objectstore.client.play.Implicits._
+import uk.gov.hmrc.objectstore.client.play.PlayObjectStoreClient
+import uk.gov.hmrc.objectstore.client.{ObjectSummaryWithMd5, Path}
 
 import java.io.File
 import java.time.Clock
-import java.util.{Base64, UUID}
+import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -39,10 +36,6 @@ class SupplementaryDataService @Inject() (
                                            objectStoreClient: PlayObjectStoreClient,
                                            clock: Clock
                                          )(implicit ec: ExecutionContext) {
-
-//  private val informationType: String = configuration.get[String]("services.sdes.information-type")
-//  private val recipientOrSender: String = configuration.get[String]("services.sdes.recipient-or-sender")
-//  private val objectStoreLocationPrefix: String = configuration.get[String]("services.sdes.object-store-location-prefix")
 
   def submitSupplementaryData(pdf: File, metadata: Metadata)(implicit hc: HeaderCarrier): Future[Done] = {
     val filename = hc.requestId.map(_.value).getOrElse(UUID.randomUUID().toString)
@@ -68,24 +61,4 @@ class SupplementaryDataService @Inject() (
       lastUpdated = clock.instant(),
       sdesCorrelationId = UUID.randomUUID().toString
     )
-
-  // TODO move to SDES Service
-//  private def fileNotifyRequest(filename: String, objectSummary: ObjectSummaryWithMd5, metadata: Metadata)(implicit hc: HeaderCarrier): FileNotifyRequest =
-//    FileNotifyRequest(
-//      informationType = informationType,
-//      file = FileMetadata(
-//        recipientOrSender = recipientOrSender,
-//        name = objectSummary.location.fileName,
-//        location = s"$objectStoreLocationPrefix${objectSummary.location.asUri}",
-//        checksum = FileChecksum("md5", base64ToHex(objectSummary.contentMd5.value)),
-//        size = objectSummary.contentLength,
-//        properties = List(
-//          FileProperty("nino", metadata.nino)
-//        )
-//      ),
-//      audit = FileAudit(filename)
-//    )
-//
-//  private def base64ToHex(string: String): String =
-//    Base64.getDecoder.decode(string).map("%02x".format(_)).mkString
 }

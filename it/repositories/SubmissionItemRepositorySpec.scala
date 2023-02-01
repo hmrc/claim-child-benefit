@@ -16,17 +16,20 @@
 
 package repositories
 
-import models.dmsa.{Metadata, ObjectSummary, SubmissionItem, SubmissionItemStatus}
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
+import models.dmsa._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import play.api.Configuration
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
+import util.MutableClock
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import java.time.{Clock, Instant, ZoneOffset}
 import java.time.temporal.ChronoUnit
+import java.time.{Duration, Instant}
+import java.util.UUID
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Future, Promise}
 
 class SubmissionItemRepositorySpec extends AnyFreeSpec
   with Matchers with OptionValues
@@ -35,7 +38,12 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
   with BeforeAndAfterEach {
 
   private val now: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS)
-  private val clock = Clock.fixed(now, ZoneOffset.UTC)
+  private val clock = MutableClock(now)
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    clock.set(now)
+  }
 
   override protected def repository = new SubmissionItemRepository(
     mongoComponent = mongoComponent,
@@ -92,4 +100,120 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
       repository.get("foobar").futureValue mustNot be(defined)
     }
   }
+
+  "lockAndReplaceOldestItemByStatus" - {
+
+    "must return Found and replace an item that is found" in {
+
+      val item1 = randomItem
+      val item2 = randomItem
+
+      repository.insert(item1).futureValue
+      clock.advance(Duration.ofMinutes(1))
+      repository.insert(item2).futureValue
+      clock.advance(Duration.ofMinutes(1))
+
+      repository.lockAndReplaceOldestItemByStatus(SubmissionItemStatus.Submitted) { item =>
+        Future.successful(item.copy(status = SubmissionItemStatus.Processed))
+      }.futureValue mustEqual QueryResult.Found
+
+      val updatedItem1 = repository.get(item1.id).futureValue.value
+      updatedItem1.status mustEqual SubmissionItemStatus.Processed
+      updatedItem1.lastUpdated mustEqual clock.instant()
+      updatedItem1.lockedAt mustBe None
+
+      val updatedItem2 = repository.get(item2.id).futureValue.value
+      updatedItem2.status mustEqual SubmissionItemStatus.Submitted
+      updatedItem2.lastUpdated mustEqual item2.lastUpdated.plus(Duration.ofMinutes(1))
+      updatedItem2.lockedAt mustBe None
+    }
+
+    "must return NotFound and not replace when an item is not found" in {
+      repository.lockAndReplaceOldestItemByStatus(SubmissionItemStatus.Submitted) { item =>
+        Future.successful(item)
+      }.futureValue mustEqual QueryResult.NotFound
+    }
+
+    "must return NotFound and not replace when an item is locked" in {
+
+      val item = randomItem.copy(lockedAt = Some(clock.instant()))
+
+      repository.insert(item).futureValue
+      clock.advance(Duration.ofSeconds(29))
+
+      repository.lockAndReplaceOldestItemByStatus(SubmissionItemStatus.Submitted) { item =>
+        Future.successful(item.copy(status = SubmissionItemStatus.Processed))
+      }.futureValue mustEqual QueryResult.NotFound
+
+      val retrievedItem = repository.get(item.id).futureValue.value
+      retrievedItem.status mustEqual SubmissionItemStatus.Submitted
+      retrievedItem.lastUpdated mustEqual item.lastUpdated
+      retrievedItem.lockedAt mustBe item.lockedAt
+    }
+
+    "must ignore locks that are too old" in {
+
+      val item1 = randomItem.copy(lockedAt = Some(clock.instant().minus(Duration.ofMinutes(30))))
+      val item2 = randomItem
+
+      repository.insert(item1).futureValue
+      clock.advance(Duration.ofMinutes(1))
+      repository.insert(item2).futureValue
+      clock.advance(Duration.ofMinutes(1))
+
+      repository.lockAndReplaceOldestItemByStatus(SubmissionItemStatus.Submitted) { item =>
+        Future.successful(item.copy(status = SubmissionItemStatus.Processed))
+      }.futureValue mustEqual QueryResult.Found
+
+      val updatedItem1 = repository.get(item1.id).futureValue.value
+      updatedItem1.status mustEqual SubmissionItemStatus.Processed
+      updatedItem1.lastUpdated mustEqual clock.instant()
+      updatedItem1.lockedAt mustBe None
+
+      val updatedItem2 = repository.get(item2.id).futureValue.value
+      updatedItem2.status mustEqual SubmissionItemStatus.Submitted
+      updatedItem2.lastUpdated mustEqual item2.lastUpdated.plus(Duration.ofMinutes(1))
+      updatedItem2.lockedAt mustBe None
+    }
+
+    "must locked item while the provided function runs" in {
+
+      val promise: Promise[SubmissionItem] = Promise()
+      val item = randomItem
+
+      repository.insert(item).futureValue
+      clock.advance(Duration.ofMinutes(1))
+
+      val runningFuture = repository.lockAndReplaceOldestItemByStatus(SubmissionItemStatus.Submitted) { _ =>
+        promise.future
+      }
+
+      repository.get(item.id).futureValue.value.lockedAt.value mustEqual clock.instant()
+      promise.success(item.copy(status = SubmissionItemStatus.Processed))
+      runningFuture.futureValue
+      repository.get(item.id).futureValue.value.lockedAt mustBe None
+    }
+
+    "must not unlock item if the provided function fails" in {
+
+      val promise: Promise[SubmissionItem] = Promise()
+      repository.insert(item).futureValue
+      clock.advance(Duration.ofMinutes(1))
+
+      val runningFuture = repository.lockAndReplaceOldestItemByStatus(SubmissionItemStatus.Submitted) { _ =>
+        promise.future
+      }
+
+      repository.get(item.id).futureValue.value.lockedAt.value mustEqual clock.instant()
+      promise.failure(new RuntimeException())
+      runningFuture.failed.futureValue
+      repository.get(item.id).futureValue.value.lockedAt.value mustEqual clock.instant()
+    }
+  }
+
+  private def randomItem: SubmissionItem = item.copy(
+    id = UUID.randomUUID().toString,
+    sdesCorrelationId = UUID.randomUUID().toString,
+    lastUpdated = clock.instant()
+  )
 }
