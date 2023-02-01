@@ -1,6 +1,3 @@
-import play.core.PlayVersion
-import play.sbt.PlayImport._
-import sbt.Keys.libraryDependencies
 import sbt._
 
 object AppDependencies {
@@ -14,8 +11,10 @@ object AppDependencies {
     "com.github.pathikrit"    %% "better-files"                 % "3.9.1",
     "uk.gov.hmrc.objectstore" %% "object-store-client-play-28"  % "1.0.0",
     "uk.gov.hmrc"             %% "internal-auth-client-play-28" % "1.2.0",
+    "uk.gov.hmrc"             %% "crypto-json-play-28"          % "7.3.0",
     "org.typelevel"           %% "cats-core"                    % "2.8.0",
-    "uk.gov.hmrc"             %% "crypto-json-play-28"          % "7.3.0"
+    "org.typelevel"           %% "cats-effect"                  % "3.4.0",
+    "co.fs2"                  %% "fs2-core"                     % "3.3.0"
   )
 
   val test = Seq(

@@ -16,20 +16,22 @@
 
 package config
 
-import cats.effect.unsafe.IORuntime
-import play.api.inject.Binding
-import play.api.{Configuration, Environment}
+import cats.effect.unsafe.{IORuntime, IORuntimeBuilder}
 
-import java.time.Clock
+import javax.inject.{Inject, Provider, Singleton}
+import scala.concurrent.ExecutionContext
 
-class Module extends play.api.inject.Module {
+@Singleton
+class IORuntimeProvider @Inject() (
+                                    defaultEc: ExecutionContext,
+                                    blockingEc: BlockingExecutionContext
+                                  ) extends Provider[IORuntime] {
 
-  override def bindings(environment: Environment, configuration: Configuration): collection.Seq[Binding[_]] = {
+  private val doNothing: () => Unit =
+    () => ()
 
-    Seq(
-      bind[AppConfig].toSelf.eagerly(),
-      bind[Clock].toInstance(Clock.systemUTC()),
-      bind[IORuntime].toProvider[IORuntimeProvider],
-    )
-  }
+  override def get(): IORuntime = IORuntimeBuilder()
+    .setCompute(defaultEc, doNothing)
+    .setBlocking(blockingEc, doNothing)
+    .build()
 }

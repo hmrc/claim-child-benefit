@@ -16,20 +16,10 @@
 
 package config
 
-import cats.effect.unsafe.IORuntime
-import play.api.inject.Binding
-import play.api.{Configuration, Environment}
+import akka.actor.ActorSystem
+import play.api.libs.concurrent.CustomExecutionContext
 
-import java.time.Clock
+import javax.inject.{Inject, Singleton}
 
-class Module extends play.api.inject.Module {
-
-  override def bindings(environment: Environment, configuration: Configuration): collection.Seq[Binding[_]] = {
-
-    Seq(
-      bind[AppConfig].toSelf.eagerly(),
-      bind[Clock].toInstance(Clock.systemUTC()),
-      bind[IORuntime].toProvider[IORuntimeProvider],
-    )
-  }
-}
+@Singleton
+class BlockingExecutionContext @Inject()(actorSystem: ActorSystem) extends CustomExecutionContext(actorSystem, "blocking-executor")
