@@ -16,6 +16,7 @@
 
 package models.submission
 
+import models.dmsa.Metadata
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
@@ -26,6 +27,7 @@ final case class SubmissionItem(
                                  status: SubmissionItemStatus,
                                  objectSummary: ObjectSummary,
                                  failureReason: Option[String],
+                                 metadata: Metadata,
                                  sdesCorrelationId: String,
                                  created: Instant,
                                  lastUpdated: Instant,
