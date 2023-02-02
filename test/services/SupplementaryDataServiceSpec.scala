@@ -111,7 +111,8 @@ class SupplementaryDataServiceSpec extends AnyFreeSpec with Matchers with Mockit
       when(mockObjectStoreClient.putObject[Source[ByteString, _]](any(), any(), any(), any(), any(), any())(any(), any())).thenReturn(Future.successful(objectSummaryWithMd5))
       when(mockSubmissionItemRepository.insert(any())).thenReturn(Future.successful(Done))
 
-      service.submitSupplementaryData(file.toJava, metadata)(hc).futureValue
+      val result = service.submitSupplementaryData(file.toJava, metadata)(hc).futureValue
+      result mustEqual "requestId"
 
       verify(mockObjectStoreClient).putObject(eqTo(Path.File("sdes/requestId.pdf")), eqTo(file.path.toFile), any(), any(), any(), any())(any(), any())
       verify(mockSubmissionItemRepository).insert(submissionItemCaptor.capture())

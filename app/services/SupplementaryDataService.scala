@@ -16,7 +16,6 @@
 
 package services
 
-import models.Done
 import models.dmsa.{Metadata, ObjectSummary, SubmissionItem, SubmissionItemStatus}
 import repositories.SubmissionItemRepository
 import uk.gov.hmrc.http.HeaderCarrier
@@ -37,12 +36,12 @@ class SupplementaryDataService @Inject() (
                                            clock: Clock
                                          )(implicit ec: ExecutionContext) {
 
-  def submitSupplementaryData(pdf: File, metadata: Metadata)(implicit hc: HeaderCarrier): Future[Done] = {
-    val filename = hc.requestId.map(_.value).getOrElse(UUID.randomUUID().toString)
+  def submitSupplementaryData(pdf: File, metadata: Metadata)(implicit hc: HeaderCarrier): Future[String] = {
+    val requestId = hc.requestId.map(_.value).getOrElse(UUID.randomUUID().toString)
     for {
-      objectSummary <- objectStoreClient.putObject(Path.Directory("sdes").file(s"$filename.pdf"), pdf)
-      _             <- submissionItemRepository.insert(createSubmissionItem(objectSummary, filename, metadata))
-    } yield Done
+      objectSummary <- objectStoreClient.putObject(Path.Directory("sdes").file(s"$requestId.pdf"), pdf)
+      _             <- submissionItemRepository.insert(createSubmissionItem(objectSummary, requestId, metadata))
+    } yield requestId
   }
 
   private def createSubmissionItem(objectSummary: ObjectSummaryWithMd5, id: String, metadata: Metadata): SubmissionItem =
