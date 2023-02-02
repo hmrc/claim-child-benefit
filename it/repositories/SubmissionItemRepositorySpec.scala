@@ -101,6 +101,37 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
     }
   }
 
+  "update by id" - {
+
+    "must update a record if it exists and return it" in {
+      val expected = item.copy(status = SubmissionItemStatus.Submitted, failureReason = Some("failure"), lastUpdated = clock.instant())
+      repository.insert(item).futureValue
+      repository.update("id", SubmissionItemStatus.Submitted, failureReason = Some("failure")).futureValue mustEqual expected
+      repository.get("id").futureValue.value mustEqual expected
+    }
+
+    "must fail if no record exists" in {
+      repository.insert(item).futureValue
+      repository.update("foobar", SubmissionItemStatus.Submitted, failureReason = Some("failure")).failed.futureValue mustEqual SubmissionItemRepository.NothingToUpdateException
+    }
+
+    "must remove failure reason if it's passed as `None`" in {
+      val newItem = item.copy(failureReason = Some("failure"))
+      val expected = item.copy(lastUpdated = clock.instant())
+      repository.insert(newItem).futureValue
+      repository.update("id", SubmissionItemStatus.Submitted, failureReason = None).futureValue
+      repository.get("id").futureValue.value mustEqual expected
+    }
+
+    "must succeed when there is no failure reason to remove" in {
+      val expected = item.copy(lastUpdated = clock.instant())
+      repository.insert(item).futureValue
+      repository.update("id", SubmissionItemStatus.Submitted, failureReason = None).futureValue
+      repository.get("id").futureValue.value mustEqual expected
+    }
+  }
+
+
   "lockAndReplaceOldestItemByStatus" - {
 
     "must return Found and replace an item that is found" in {

@@ -19,7 +19,7 @@ package repositories
 import models.Done
 import models.dmsa.{QueryResult, SubmissionItem, SubmissionItemStatus}
 import org.bson.conversions.Bson
-import org.mongodb.scala.model.{Filters, FindOneAndUpdateOptions, IndexModel, IndexOptions, Indexes, Sorts, Updates}
+import org.mongodb.scala.model.{Filters, FindOneAndUpdateOptions, IndexModel, IndexOptions, Indexes, ReturnDocument, Sorts, Updates}
 import play.api.Configuration
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
@@ -78,6 +78,29 @@ class SubmissionItemRepository @Inject() (
   def get(id: String): Future[Option[SubmissionItem]] =
     collection.find(Filters.equal("id", id)).headOption()
 
+  def update(id: String, status: SubmissionItemStatus, failureReason: Option[String]): Future[SubmissionItem] = {
+
+    val filter = Filters.equal("id", id)
+
+    val updates = List(
+      Updates.set("lastUpdated", clock.instant()),
+      Updates.set("status", status),
+      failureReason.map(Updates.set("failureReason", _))
+        .getOrElse(Updates.unset("failureReason"))
+    )
+
+    collection.findOneAndUpdate(
+      filter = filter,
+      update = Updates.combine(updates: _*),
+      options = FindOneAndUpdateOptions()
+        .returnDocument(ReturnDocument.AFTER)
+        .upsert(false)
+    ).headOption().flatMap {
+      _.map(Future.successful)
+        .getOrElse(Future.failed(SubmissionItemRepository.NothingToUpdateException))
+    }
+  }
+
   def lockAndReplaceOldestItemByStatus(status: SubmissionItemStatus)(f: SubmissionItem => Future[SubmissionItem]): Future[QueryResult] =
     lockAndReplace(
       filter = Filters.equal("status", status),
@@ -110,4 +133,11 @@ class SubmissionItemRepository @Inject() (
           .map(_ => QueryResult.Found)
       }.getOrElse(Future.successful(QueryResult.NotFound))
     }
+}
+
+object SubmissionItemRepository {
+
+  case object NothingToUpdateException extends Exception {
+    override def getMessage: String = "Unable to find submission item"
+  }
 }
