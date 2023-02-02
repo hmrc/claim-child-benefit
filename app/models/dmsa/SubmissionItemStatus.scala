@@ -25,7 +25,6 @@ object SubmissionItemStatus {
 
   case object Submitted extends SubmissionItemStatus
   case object Forwarded extends SubmissionItemStatus
-  case object Processed extends SubmissionItemStatus
   case object Failed extends SubmissionItemStatus
   case object Completed extends SubmissionItemStatus
 
@@ -33,7 +32,6 @@ object SubmissionItemStatus {
     __.read[String].flatMap {
       case "Submitted" => Reads.pure(Submitted)
       case "Forwarded" => Reads.pure(Forwarded)
-      case "Processed" => Reads.pure(Processed)
       case "Failed"    => Reads.pure(Failed)
       case "Completed" => Reads.pure(Completed)
       case _           => Reads.failed("Invalid value for submission item status")
@@ -43,7 +41,6 @@ object SubmissionItemStatus {
     Writes {
       case Submitted => JsString("Submitted")
       case Forwarded => JsString("Forwarded")
-      case Processed => JsString("Processed")
       case Failed    => JsString("Failed")
       case Completed => JsString("Completed")
     }
@@ -55,14 +52,12 @@ object SubmissionItemStatus {
       _.toLowerCase match {
         case "submitted" => Submitted
         case "forwarded" => Forwarded
-        case "processed" => Processed
         case "failed"    => Failed
         case "completed" => Completed
       },
       {
         case Submitted => "submitted"
         case Forwarded => "forwarded"
-        case Processed => "processed"
         case Failed    => "failed"
         case Completed => "completed"
       },

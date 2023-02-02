@@ -39,10 +39,6 @@ class SubmissionItemStatusSpec extends AnyFreeSpec with Matchers with OptionValu
       JsString("Failed").as[SubmissionItemStatus] mustEqual SubmissionItemStatus.Failed
     }
 
-    "must read Processed" in {
-      JsString("Processed").as[SubmissionItemStatus] mustEqual SubmissionItemStatus.Processed
-    }
-
     "must read Completed" in {
       JsString("Completed").as[SubmissionItemStatus] mustEqual SubmissionItemStatus.Completed
     }
@@ -64,10 +60,6 @@ class SubmissionItemStatusSpec extends AnyFreeSpec with Matchers with OptionValu
 
     "must write Failed" in {
       Json.toJson[SubmissionItemStatus](SubmissionItemStatus.Failed) mustEqual JsString("Failed")
-    }
-
-    "must write Processed" in {
-      Json.toJson[SubmissionItemStatus](SubmissionItemStatus.Processed) mustEqual JsString("Processed")
     }
 
     "must write Completed" in {
@@ -101,11 +93,6 @@ class SubmissionItemStatusSpec extends AnyFreeSpec with Matchers with OptionValu
       bind("failed").toOption.value mustEqual SubmissionItemStatus.Failed
     }
 
-    "must bind Processed" in {
-      bind("Processed").toOption.value mustEqual SubmissionItemStatus.Processed
-      bind("processed").toOption.value mustEqual SubmissionItemStatus.Processed
-    }
-
     "must bind Completed" in {
       bind("Completed").toOption.value mustEqual SubmissionItemStatus.Completed
       bind("completed").toOption.value mustEqual SubmissionItemStatus.Completed
@@ -125,10 +112,6 @@ class SubmissionItemStatusSpec extends AnyFreeSpec with Matchers with OptionValu
 
     "must unbind Failed" in {
       unbind(SubmissionItemStatus.Failed) mustEqual "status=failed"
-    }
-
-    "must unbind Processed" in {
-      unbind(SubmissionItemStatus.Processed) mustEqual "status=processed"
     }
 
     "must unbind Completed" in {

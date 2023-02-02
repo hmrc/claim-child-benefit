@@ -145,11 +145,11 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
       clock.advance(Duration.ofMinutes(1))
 
       repository.lockAndReplaceOldestItemByStatus(SubmissionItemStatus.Submitted) { item =>
-        Future.successful(item.copy(status = SubmissionItemStatus.Processed))
+        Future.successful(item.copy(status = SubmissionItemStatus.Completed))
       }.futureValue mustEqual QueryResult.Found
 
       val updatedItem1 = repository.get(item1.id).futureValue.value
-      updatedItem1.status mustEqual SubmissionItemStatus.Processed
+      updatedItem1.status mustEqual SubmissionItemStatus.Completed
       updatedItem1.lastUpdated mustEqual clock.instant()
       updatedItem1.lockedAt mustBe None
 
@@ -173,7 +173,7 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
       clock.advance(Duration.ofSeconds(29))
 
       repository.lockAndReplaceOldestItemByStatus(SubmissionItemStatus.Submitted) { item =>
-        Future.successful(item.copy(status = SubmissionItemStatus.Processed))
+        Future.successful(item.copy(status = SubmissionItemStatus.Completed))
       }.futureValue mustEqual QueryResult.NotFound
 
       val retrievedItem = repository.get(item.id).futureValue.value
@@ -193,11 +193,11 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
       clock.advance(Duration.ofMinutes(1))
 
       repository.lockAndReplaceOldestItemByStatus(SubmissionItemStatus.Submitted) { item =>
-        Future.successful(item.copy(status = SubmissionItemStatus.Processed))
+        Future.successful(item.copy(status = SubmissionItemStatus.Completed))
       }.futureValue mustEqual QueryResult.Found
 
       val updatedItem1 = repository.get(item1.id).futureValue.value
-      updatedItem1.status mustEqual SubmissionItemStatus.Processed
+      updatedItem1.status mustEqual SubmissionItemStatus.Completed
       updatedItem1.lastUpdated mustEqual clock.instant()
       updatedItem1.lockedAt mustBe None
 
@@ -220,7 +220,7 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
       }
 
       repository.get(item.id).futureValue.value.lockedAt.value mustEqual clock.instant()
-      promise.success(item.copy(status = SubmissionItemStatus.Processed))
+      promise.success(item.copy(status = SubmissionItemStatus.Completed))
       runningFuture.futureValue
       repository.get(item.id).futureValue.value.lockedAt mustBe None
     }
