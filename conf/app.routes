@@ -7,3 +7,6 @@ DELETE      /user-data              controllers.UserDataController.clear
 POST        /user-data/keep-alive   controllers.UserDataController.keepAlive
 
 GET         /designatory-details    controllers.DesignatoryDetailsController.get
+
+GET         /allow-list             controllers.AllowlistController.get
+PUT         /allow-list             controllers.AllowlistController.set
