@@ -19,6 +19,7 @@ package config
 import cats.effect.unsafe.IORuntime
 import play.api.inject.Binding
 import play.api.{Configuration, Environment}
+import workers.SdesNotificationWorker
 
 import java.time.Clock
 
@@ -30,6 +31,7 @@ class Module extends play.api.inject.Module {
       bind[AppConfig].toSelf.eagerly(),
       bind[Clock].toInstance(Clock.systemUTC()),
       bind[IORuntime].toProvider[IORuntimeProvider],
+      bind[SdesNotificationWorker].toSelf.eagerly()
     )
   }
 }
