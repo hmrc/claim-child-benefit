@@ -16,7 +16,7 @@
 
 package repositories
 
-import models.{AllowlistEntry, AllowlistEntryFormatProvider, Done}
+import models.{AllowlistEntry, Done}
 import org.mockito.MockitoSugar
 import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.OptionValues
@@ -24,8 +24,9 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.Configuration
-import play.api.libs.json.{JsObject, Json, __}
+import play.api.libs.json.{Json, __}
 import uk.gov.hmrc.crypto.Sensitive.SensitiveString
+import uk.gov.hmrc.crypto.{Decrypter, Encrypter, SymmetricCryptoFactory}
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 import java.security.SecureRandom
@@ -45,11 +46,12 @@ class AllowlistRepositorySpec
     Base64.getEncoder.encodeToString(aesKey)
   }
 
-  private val config = Configuration("crypto.key" -> aesKey)
+  private val configuration = Configuration("crypto.key" -> aesKey)
 
-  private val formatProvider = new AllowlistEntryFormatProvider(config)
+  private implicit val crypto: Encrypter with Decrypter =
+    SymmetricCryptoFactory.aesGcmCryptoFromConfig("crypto", configuration.underlying)
 
-  protected override val repository = new AllowlistRepository(mongoComponent, formatProvider)
+  protected override val repository = new AllowlistRepository(mongoComponent)
 
   private val entry1 = AllowlistEntry(SensitiveString("foo"))
   private val entry2 = AllowlistEntry(SensitiveString("bar"))

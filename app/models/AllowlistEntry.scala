@@ -16,27 +16,31 @@
 
 package models
 
-import play.api.Configuration
 import play.api.libs.json._
 import uk.gov.hmrc.crypto.Sensitive.SensitiveString
-import uk.gov.hmrc.crypto.SymmetricCryptoFactory
 import uk.gov.hmrc.crypto.json.JsonEncryption
-
-import javax.inject.{Inject, Singleton}
+import uk.gov.hmrc.crypto.{Decrypter, Encrypter}
 
 final case class AllowlistEntry(nino: SensitiveString)
 
-@Singleton
-class AllowlistEntryFormatProvider @Inject()(config: Configuration) {
+object AllowlistEntry {
 
-  implicit val crypto = SymmetricCryptoFactory.aesGcmCryptoFromConfig("crypto", config.underlying)
-  val sensitiveStringFormat = JsonEncryption.sensitiveEncrypterDecrypter(SensitiveString.apply)
+  implicit def reads(implicit crypto: Encrypter with Decrypter): Reads[AllowlistEntry] = {
 
-  private val reads: Reads[AllowlistEntry] =
-    (__ \ "_id").read[SensitiveString](sensitiveStringFormat).map(s => AllowlistEntry(s))
+    implicit val sensitiveStringFormat: Format[SensitiveString] =
+      JsonEncryption.sensitiveEncrypterDecrypter(SensitiveString.apply)
 
-  private val writes: OWrites[AllowlistEntry] =
-    (__ \ "_id").write[SensitiveString](sensitiveStringFormat).contramap(s => s.nino)
+    (__ \ "_id").read[SensitiveString].map(AllowlistEntry.apply)
+  }
 
-  implicit val format: OFormat[AllowlistEntry] = OFormat(reads, writes)
+  implicit def writes(implicit crypto: Encrypter with Decrypter): OWrites[AllowlistEntry] = {
+
+    implicit val sensitiveStringFormat: Format[SensitiveString] =
+      JsonEncryption.sensitiveEncrypterDecrypter(SensitiveString.apply)
+
+    (__ \ "_id").write[SensitiveString].contramap(_.nino)
+  }
+
+  implicit def format(implicit crypto: Encrypter with Decrypter): OFormat[AllowlistEntry] =
+    OFormat(reads, writes)
 }
