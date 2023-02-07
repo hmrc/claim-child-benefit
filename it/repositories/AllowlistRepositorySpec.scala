@@ -18,12 +18,13 @@ package repositories
 
 import models.{AllowlistEntry, AllowlistEntryFormatProvider, Done}
 import org.mockito.MockitoSugar
+import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.Configuration
-import uk.gov.hmrc.crypto.Crypted
+import play.api.libs.json.{JsObject, Json, __}
 import uk.gov.hmrc.crypto.Sensitive.SensitiveString
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
@@ -74,6 +75,15 @@ class AllowlistRepositorySpec
 
       repository.set(entry1).futureValue mustEqual Done
       findAll().futureValue.head mustEqual entry1
+
+      val rawBson = mongoComponent.database.getCollection[BsonDocument]("allowlist").find().head.futureValue
+      val path = __ \ "_id"
+      val parsed = path(Json.parse(rawBson.toJson))
+
+      parsed match {
+        case Seq(x) => x mustNot equal(entry1.nino.decryptedValue)
+        case _ => ()
+      }
     }
 
     "must return Done but not insert a new record when asked to insert a duplicate" in {
