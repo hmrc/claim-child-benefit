@@ -101,6 +101,20 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
     }
   }
 
+  "get by sdes correlation id" - {
+
+    "must return an item that matches the id" in {
+      repository.insert(item).futureValue
+      repository.insert(item.copy(id = "id2", sdesCorrelationId = "correlationId2")).futureValue
+      repository.getByCorrelationId(item.sdesCorrelationId).futureValue.value mustEqual item.copy(lastUpdated = clock.instant())
+    }
+
+    "must return `None` when there is no item matching the id" in {
+      repository.insert(item).futureValue
+      repository.getByCorrelationId("foobar").futureValue mustNot be(defined)
+    }
+  }
+
   "update by id" - {
 
     "must update a record if it exists and return it" in {

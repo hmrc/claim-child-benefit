@@ -78,6 +78,9 @@ class SubmissionItemRepository @Inject() (
   def get(id: String): Future[Option[SubmissionItem]] =
     collection.find(Filters.equal("id", id)).headOption()
 
+  def getByCorrelationId(id: String): Future[Option[SubmissionItem]] =
+    collection.find(Filters.equal("sdesCorrelationId", id)).headOption()
+
   def update(id: String, status: SubmissionItemStatus, failureReason: Option[String]): Future[SubmissionItem] = {
 
     val filter = Filters.equal("id", id)
