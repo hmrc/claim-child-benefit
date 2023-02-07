@@ -16,11 +16,25 @@
 
 package models.dmsa
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{Format, Json, OFormat}
+import uk.gov.hmrc.crypto.{Decrypter, Encrypter}
+import uk.gov.hmrc.crypto.Sensitive.SensitiveString
+import uk.gov.hmrc.crypto.json.JsonEncryption
 
-final case class Metadata(nino: String)
+final case class Metadata(nino: SensitiveString)
 
 object Metadata {
 
-  implicit lazy val format: OFormat[Metadata] = Json.format
+  def apply(nino: String): Metadata =
+    new Metadata(
+      nino = SensitiveString(nino)
+    )
+
+  implicit def format(implicit crypto: Encrypter with Decrypter): OFormat[Metadata] = {
+
+    implicit val sensitiveStringFormat: Format[SensitiveString] =
+      JsonEncryption.sensitiveEncrypterDecrypter(SensitiveString.apply)
+
+    Json.format
+  }
 }

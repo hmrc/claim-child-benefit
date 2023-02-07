@@ -21,6 +21,7 @@ import models.dmsa.{QueryResult, SubmissionItem, SubmissionItemStatus}
 import org.bson.conversions.Bson
 import org.mongodb.scala.model.{Filters, FindOneAndUpdateOptions, IndexModel, IndexOptions, Indexes, ReturnDocument, Sorts, Updates}
 import play.api.Configuration
+import uk.gov.hmrc.crypto.{Decrypter, Encrypter}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
@@ -34,8 +35,7 @@ class SubmissionItemRepository @Inject() (
                                            mongoComponent: MongoComponent,
                                            clock: Clock,
                                            configuration: Configuration
-                                         )(implicit ec: ExecutionContext
-                                         ) extends PlayMongoRepository[SubmissionItem](
+                                         )(implicit ec: ExecutionContext, crypto: Encrypter with Decrypter) extends PlayMongoRepository[SubmissionItem](
     collectionName = "submissions",
     mongoComponent = mongoComponent,
     domainFormat = SubmissionItem.format,

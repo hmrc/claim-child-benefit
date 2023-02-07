@@ -26,10 +26,11 @@ import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
-import play.api.Configuration
+import play.api.{Configuration, Environment}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import repositories.SubmissionItemRepository
+import uk.gov.hmrc.crypto.{Decrypter, Encrypter, SymmetricCryptoFactory}
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
 import java.time.temporal.ChronoUnit
@@ -43,8 +44,15 @@ class SdesServiceSpec extends AnyFreeSpec with Matchers
   with ScalaFutures with IntegrationPatience
   with MockitoSugar with OptionValues with BeforeAndAfterEach {
 
+  private val configuration: Configuration =
+    Configuration.load(Environment.simple())
+
+  private implicit val crypto: Encrypter with Decrypter =
+    SymmetricCryptoFactory.aesGcmCryptoFromConfig("crypto", configuration.underlying)
+
   private val clock: Clock = Clock.fixed(Instant.now(), ZoneOffset.UTC)
   private val mockSdesConnector: SdesConnector = mock[SdesConnector]
+
   override protected lazy val repository = new SubmissionItemRepository(
     mongoComponent = mongoComponent,
     clock = clock,

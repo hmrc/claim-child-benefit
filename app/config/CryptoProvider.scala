@@ -14,25 +14,18 @@
  * limitations under the License.
  */
 
-package controllers
+package config
 
-import models.dmsa.Metadata
-import play.api.data.Form
-import play.api.data.Forms._
-import uk.gov.hmrc.crypto.Sensitive.SensitiveString
-import uk.gov.hmrc.domain.Nino
+import play.api.Configuration
+import uk.gov.hmrc.crypto.{Decrypter, Encrypter, SymmetricCryptoFactory}
 
-import javax.inject.{Inject, Singleton}
-import scala.util.Try
+import javax.inject.{Inject, Provider, Singleton}
 
 @Singleton
-class SupplementaryDataFormProvider @Inject()() {
+class CryptoProvider @Inject() (
+                                 configuration: Configuration
+                               ) extends Provider[Encrypter with Decrypter] {
 
-  val form: Form[Metadata] = Form(
-    mapping(
-      "metadata.nino" -> text
-        .verifying("error.metadata.nino.invalid", string => Try(Nino(string)).isSuccess)
-        .transform(SensitiveString.apply, (_: SensitiveString).decryptedValue)
-    )(Metadata.apply)(Metadata.unapply)
-  )
+  override def get(): Encrypter with Decrypter =
+    SymmetricCryptoFactory.aesGcmCryptoFromConfig("crypto", configuration.underlying)
 }

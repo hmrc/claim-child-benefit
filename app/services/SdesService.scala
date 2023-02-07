@@ -68,7 +68,7 @@ class SdesService @Inject() (
         checksum = FileChecksum("md5", base64ToHex(item.objectSummary.contentMd5)),
         size = item.objectSummary.contentLength,
         properties = List(
-          FileProperty("nino", item.metadata.nino)
+          FileProperty("nino", item.metadata.nino.decryptedValue)
         )
       ),
       audit = FileAudit(item.sdesCorrelationId)

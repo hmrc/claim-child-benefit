@@ -21,7 +21,8 @@ import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
-import play.api.Configuration
+import play.api.{Configuration, Environment}
+import uk.gov.hmrc.crypto.{Decrypter, Encrypter, SymmetricCryptoFactory}
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 import util.MutableClock
 
@@ -36,6 +37,12 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
   with DefaultPlayMongoRepositorySupport[SubmissionItem]
   with ScalaFutures with IntegrationPatience
   with BeforeAndAfterEach {
+
+  private val configuration: Configuration =
+    Configuration.load(Environment.simple())
+
+  private implicit val crypto: Encrypter with Decrypter =
+    SymmetricCryptoFactory.aesGcmCryptoFromConfig("crypto", configuration.underlying)
 
   private val now: Instant = Instant.now().truncatedTo(ChronoUnit.MILLIS)
   private val clock = MutableClock(now)
