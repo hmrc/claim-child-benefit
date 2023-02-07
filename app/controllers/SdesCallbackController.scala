@@ -44,14 +44,14 @@ class SdesCallbackController @Inject() (
   def callback = Action.async(parse.json[NotificationCallback]) { implicit request =>
     logger.info(s"SDES Callback received for correlationId: ${request.body.correlationID}, with status: ${request.body.notification}")
     retryService.retry(
-      submissionItemRepository.get(request.body.correlationID).flatMap {
+      submissionItemRepository.getByCorrelationId(request.body.correlationID).flatMap {
         _.map { item =>
           if (isLocked(item)) {
             logger.warn(s"correlationId: ${request.body.correlationID} was locked!")
             Future.failed(SubmissionLockedException(item.sdesCorrelationId))
           } else {
             getNewItemStatus(request.body.notification).map { newStatus =>
-              submissionItemRepository.update(item.sdesCorrelationId, newStatus, request.body.failureReason)
+              submissionItemRepository.update(item.id, newStatus, request.body.failureReason)
                 .map(_ => Ok)
             }.getOrElse(Future.successful(Ok))
           }

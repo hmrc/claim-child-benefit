@@ -88,7 +88,7 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
 
     "must return OK when the status is updated to FileReady" in {
 
-      when(mockSubmissionItemRepository.get(any())).thenReturn(Future.successful(Some(item)))
+      when(mockSubmissionItemRepository.getByCorrelationId(any())).thenReturn(Future.successful(Some(item)))
 
       val request = FakeRequest(routes.SdesCallbackController.callback)
         .withJsonBody(Json.toJson(requestBody.copy(notification = NotificationType.FileReady)))
@@ -96,13 +96,13 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
       val response = route(app, request).value
 
       status(response) mustEqual OK
-      verify(mockSubmissionItemRepository, times(1)).get(requestBody.correlationID)
+      verify(mockSubmissionItemRepository, times(1)).getByCorrelationId(requestBody.correlationID)
       verify(mockSubmissionItemRepository, times(0)).update(any(), any(), any())
     }
 
     "must return OK when the status is updated to FileReceived" in {
 
-      when(mockSubmissionItemRepository.get(any())).thenReturn(Future.successful(Some(item)))
+      when(mockSubmissionItemRepository.getByCorrelationId(any())).thenReturn(Future.successful(Some(item)))
 
       val request = FakeRequest(routes.SdesCallbackController.callback)
         .withJsonBody(Json.toJson(requestBody.copy(notification = NotificationType.FileReceived)))
@@ -110,13 +110,13 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
       val response = route(app, request).value
 
       status(response) mustEqual OK
-      verify(mockSubmissionItemRepository, times(1)).get(requestBody.correlationID)
+      verify(mockSubmissionItemRepository, times(1)).getByCorrelationId(requestBody.correlationID)
       verify(mockSubmissionItemRepository, times(0)).update(any(), any(), any())
     }
 
     "must update the status of the submission to Completed and return OK when the status is updated to Processed" in {
 
-      when(mockSubmissionItemRepository.get(any())).thenReturn(Future.successful(Some(item)))
+      when(mockSubmissionItemRepository.getByCorrelationId(any())).thenReturn(Future.successful(Some(item)))
       when(mockSubmissionItemRepository.update(any(), any(), any())).thenReturn(Future.successful(item))
 
       val request = FakeRequest(routes.SdesCallbackController.callback)
@@ -125,13 +125,13 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
       val response = route(app, request).value
 
       status(response) mustEqual OK
-      verify(mockSubmissionItemRepository, times(1)).get(requestBody.correlationID)
-      verify(mockSubmissionItemRepository, times(1)).update(requestBody.correlationID, SubmissionItemStatus.Completed, None)
+      verify(mockSubmissionItemRepository, times(1)).getByCorrelationId(requestBody.correlationID)
+      verify(mockSubmissionItemRepository, times(1)).update(item.id, SubmissionItemStatus.Completed, None)
     }
 
     "must update the status of the submission to Failed and return OK when the status is updated to Failed" in {
 
-      when(mockSubmissionItemRepository.get(any())).thenReturn(Future.successful(Some(item)))
+      when(mockSubmissionItemRepository.getByCorrelationId(any())).thenReturn(Future.successful(Some(item)))
       when(mockSubmissionItemRepository.update(any(), any(), any())).thenReturn(Future.successful(item))
 
       val request = FakeRequest(routes.SdesCallbackController.callback)
@@ -140,15 +140,15 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
       val response = route(app, request).value
 
       status(response) mustEqual OK
-      verify(mockSubmissionItemRepository, times(1)).get(requestBody.correlationID)
-      verify(mockSubmissionItemRepository, times(1)).update(requestBody.correlationID, SubmissionItemStatus.Failed, Some("failure reason"))
+      verify(mockSubmissionItemRepository, times(1)).getByCorrelationId(requestBody.correlationID)
+      verify(mockSubmissionItemRepository, times(1)).update(item.id, SubmissionItemStatus.Failed, Some("failure reason"))
     }
 
     "must retry when the item is locked" in {
 
       val lockedItem = item.copy(lockedAt = Some(clock.instant()))
 
-      when(mockSubmissionItemRepository.get(any()))
+      when(mockSubmissionItemRepository.getByCorrelationId(any()))
         .thenReturn(Future.successful(Some(lockedItem)))
         .andThen(Future.successful(Some(item)))
       when(mockSubmissionItemRepository.update(any(), any(), any())).thenReturn(Future.successful(item))
@@ -159,12 +159,12 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
       val response = route(app, request).value
 
       status(response) mustEqual OK
-      verify(mockSubmissionItemRepository, times(2)).get(requestBody.correlationID)
-      verify(mockSubmissionItemRepository, times(1)).update(requestBody.correlationID, SubmissionItemStatus.Completed, None)
+      verify(mockSubmissionItemRepository, times(2)).getByCorrelationId(requestBody.correlationID)
+      verify(mockSubmissionItemRepository, times(1)).update(item.id, SubmissionItemStatus.Completed, None)
     }
 
     "must not have to retry when the lock has expired" in {
-      when(mockSubmissionItemRepository.get(any())).thenReturn(Future.successful(Some(item.copy(lockedAt = Some(clock.instant().minusSeconds(30))))))
+      when(mockSubmissionItemRepository.getByCorrelationId(any())).thenReturn(Future.successful(Some(item.copy(lockedAt = Some(clock.instant().minusSeconds(30))))))
       when(mockSubmissionItemRepository.update(any(), any(), any())).thenReturn(Future.successful(item))
 
       val request = FakeRequest(routes.SdesCallbackController.callback)
@@ -173,13 +173,13 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
       val response = route(app, request).value
 
       status(response) mustEqual OK
-      verify(mockSubmissionItemRepository, times(1)).get(requestBody.correlationID)
-      verify(mockSubmissionItemRepository, times(1)).update(requestBody.correlationID, SubmissionItemStatus.Completed, None)
+      verify(mockSubmissionItemRepository, times(1)).getByCorrelationId(requestBody.correlationID)
+      verify(mockSubmissionItemRepository, times(1)).update(item.id, SubmissionItemStatus.Completed, None)
     }
 
     "must return NOT_FOUND when there is no matching submission" in {
 
-      when(mockSubmissionItemRepository.get(any())).thenReturn(Future.successful(None))
+      when(mockSubmissionItemRepository.getByCorrelationId(any())).thenReturn(Future.successful(None))
 
       val request = FakeRequest(routes.SdesCallbackController.callback)
         .withJsonBody(Json.toJson(requestBody))
@@ -197,7 +197,7 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
 
     "must fail when the call to get an item fails" in {
 
-      when(mockSubmissionItemRepository.get(any())).thenReturn(Future.failed(new RuntimeException()))
+      when(mockSubmissionItemRepository.getByCorrelationId(any())).thenReturn(Future.failed(new RuntimeException()))
 
       val request = FakeRequest(routes.SdesCallbackController.callback)
         .withJsonBody(Json.toJson(requestBody))
@@ -207,7 +207,7 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
 
     "must fail when the call to update an item fails" in {
 
-      when(mockSubmissionItemRepository.get(any())).thenReturn(Future.successful(Some(item)))
+      when(mockSubmissionItemRepository.getByCorrelationId(any())).thenReturn(Future.successful(Some(item)))
       when(mockSubmissionItemRepository.update(any(), any(), any())).thenReturn(Future.failed(new RuntimeException()))
 
       val request = FakeRequest(routes.SdesCallbackController.callback)
