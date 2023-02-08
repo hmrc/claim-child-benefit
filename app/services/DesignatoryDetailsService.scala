@@ -31,18 +31,29 @@ class DesignatoryDetailsService @Inject() (
   def getDesignatoryDetails(nino: String)(implicit hc: HeaderCarrier): Future[DesignatoryDetails] =
     connector.getDesignatoryDetails(nino).map { result =>
 
-      val realName = result.names.filter(_.nameType == 1).maxByOption(_.nameSequenceNumber)
-      val knownAs = result.names.filter(_.nameType == 2).maxByOption(_.nameSequenceNumber)
-      val name = (realName orElse knownAs).map(Name(_))
+      val realName = result.names
+        .filter(n => n.nameType == 1 && n.nameEndDate.isEmpty)
+        .maxByOption(_.nameSequenceNumber)
+        .map(Name(_))
 
-      val residentialAddresses = result.addresses.filter(_.addressType == 1)
-      val residentialAddress = residentialAddresses.maxByOption(_.addressSequenceNumber).map(Address(_))
+      val knownAs = result.names
+        .filter(n => n.nameType == 2 && n.nameEndDate.isEmpty)
+        .maxByOption(_.nameSequenceNumber)
+        .map(Name(_))
 
-      val correspondenceAddresses = result.addresses.filter(_.addressType == 2)
-      val correspondenceAddress = correspondenceAddresses.maxByOption(_.addressSequenceNumber).map(Address(_))
+      val residentialAddress = result.addresses
+        .filter(a => a.addressType == 1 && a.addressEndDate.isEmpty)
+        .maxByOption(_.addressSequenceNumber)
+        .map(Address(_))
+
+      val correspondenceAddress = result.addresses
+        .filter(a => a.addressType == 2 && a.addressEndDate.isEmpty)
+        .maxByOption(_.addressSequenceNumber)
+        .map(Address(_))
 
       DesignatoryDetails(
-        name = name,
+        realName = realName,
+        knownAsName = knownAs,
         residentialAddress = residentialAddress,
         correspondenceAddress = correspondenceAddress
       )

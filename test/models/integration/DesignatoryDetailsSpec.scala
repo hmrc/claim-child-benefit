@@ -20,6 +20,8 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.libs.json.Json
 
+import java.time.LocalDate
+
 class DesignatoryDetailsSpec extends AnyFreeSpec with Matchers {
 
   private val name = Name(
@@ -28,7 +30,8 @@ class DesignatoryDetailsSpec extends AnyFreeSpec with Matchers {
     titleType = 0,
     firstForename = "first",
     secondForename = Some("middle"),
-    surname = "surname"
+    surname = "surname",
+    nameEndDate = Some(LocalDate.now)
   )
 
   private val address = Address(
@@ -40,7 +43,8 @@ class DesignatoryDetailsSpec extends AnyFreeSpec with Matchers {
     addressLine3 = None,
     addressLine4 = None,
     addressLine5 = None,
-    addressPostcode = Some("postcode")
+    addressPostcode = Some("postcode"),
+    addressEndDate = Some(LocalDate.now)
   )
 
   private val model = DesignatoryDetails(

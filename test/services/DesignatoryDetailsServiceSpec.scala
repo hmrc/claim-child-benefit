@@ -28,6 +28,7 @@ import play.api.inject.bind
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.NinoGenerator
 
+import java.time.LocalDate
 import scala.concurrent.Future
 
 class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFutures {
@@ -57,7 +58,8 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
           titleType = 1,
           firstForename = "first",
           secondForename = Some("middle"),
-          surname = "real1"
+          surname = "real1",
+          nameEndDate = None
         )
 
         val realName2 = realName1.copy(
@@ -65,16 +67,29 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
           surname = "real2"
         )
 
-        val knownAs1 = realName1.copy(
+        val realName3 = realName1.copy(
           nameSequenceNumber = 3,
+          surname = "real3",
+          nameEndDate = Some(LocalDate.now)
+        )
+
+        val knownAs1 = realName1.copy(
+          nameSequenceNumber = 4,
           nameType = 2,
           surname = "knownAs1"
         )
 
         val knownAs2 = realName1.copy(
-          nameSequenceNumber = 4,
+          nameSequenceNumber = 5,
           nameType = 2,
           surname = "knownAs2"
+        )
+
+        val knownAs3 = realName1.copy(
+          nameSequenceNumber = 6,
+          nameType = 2,
+          surname = "knownAs3",
+          nameEndDate = Some(LocalDate.now)
         )
 
         val residentialAddress1 = models.integration.Address(
@@ -86,7 +101,8 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
           addressLine3 = Some("line3"),
           addressLine4 = Some("line4"),
           addressLine5 = Some("line5"),
-          addressPostcode = Some("residentialAddress1")
+          addressPostcode = Some("residentialAddress1"),
+          addressEndDate = None
         )
 
         val correspondenceAddress1 = residentialAddress1.copy(
@@ -106,29 +122,53 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
           addressPostcode = Some("correspondenceAddress2")
         )
 
+        val residentialAddress3 = residentialAddress1.copy(
+          addressSequenceNumber = 5,
+          addressPostcode = Some("residentialAddress3"),
+          addressEndDate = Some(LocalDate.now)
+        )
+
+        val correspondenceAddress3 = residentialAddress1.copy(
+          addressSequenceNumber = 6,
+          addressType = 2,
+          addressPostcode = Some("correspondenceAddress3"),
+          addressEndDate = Some(LocalDate.now)
+        )
+
         models.integration.DesignatoryDetails(
           names = List(
             realName1,
             knownAs1,
             realName2,
-            knownAs2
+            knownAs2,
+            realName3,
+            knownAs3
           ),
           addresses = List(
             residentialAddress1,
             residentialAddress2,
             correspondenceAddress1,
-            correspondenceAddress2
+            correspondenceAddress2,
+            residentialAddress3,
+            correspondenceAddress3
           )
         )
       }
 
       val expectedResponse = {
 
-        val name = models.Name(
+        val realName = models.Name(
           title = Some("Mr"),
           firstName = "first",
           middleName = Some("middle"),
           lastName = "real2"
+        )
+
+        val knownAsName = models.Name(
+          title = Some("Mr"),
+          firstName = "first",
+          middleName = Some("middle"),
+          lastName = "knownAs2"
         )
 
         val residentialAddress = models.Address(
@@ -152,57 +192,10 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
         )
 
         models.DesignatoryDetails(
-          name = Some(name),
+          realName = Some(realName),
+          knownAsName = Some(knownAsName),
           residentialAddress = Some(residentialAddress),
           correspondenceAddress = Some(correspondenceAddress)
-        )
-      }
-
-      when(mockIfConnector.getDesignatoryDetails(any())(any())).thenReturn(Future.successful(ifResponse))
-
-      service.getDesignatoryDetails(nino).futureValue mustEqual expectedResponse
-    }
-
-    "must return a known-as name when there are no real names" in {
-
-      implicit val hc: HeaderCarrier = HeaderCarrier()
-      val nino = NinoGenerator.randomNino()
-
-      val ifResponse = {
-
-        val knownAs1 = models.integration.Name(
-          nameSequenceNumber = 1,
-          nameType = 2,
-          titleType = 1,
-          firstForename = "first",
-          secondForename = None,
-          surname = "knownAs1"
-        )
-
-        val knownAs2 = knownAs1.copy(
-          nameSequenceNumber = 2,
-          surname = "knownAs2"
-        )
-
-        models.integration.DesignatoryDetails(
-          names = List(knownAs1, knownAs2),
-          addresses = List.empty
-        )
-      }
-
-      val expectedResponse = {
-
-        val name = models.Name(
-          title = Some("Mr"),
-          firstName = "first",
-          middleName = None,
-          lastName = "knownAs2"
-        )
-
-        models.DesignatoryDetails(
-          name = Some(name),
-          residentialAddress = None,
-          correspondenceAddress = None
         )
       }
 

@@ -101,7 +101,8 @@ class DesignatoryDetailsControllerSpec
         )
 
         models.DesignatoryDetails(
-          name = Some(name),
+          realName = Some(name),
+          knownAsName = None,
           residentialAddress = Some(residentialAddress),
           correspondenceAddress = Some(correspondenceAddress)
         )

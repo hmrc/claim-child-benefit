@@ -19,7 +19,8 @@ package models
 import play.api.libs.json.{Json, OFormat}
 
 final case class DesignatoryDetails(
-                                     name: Option[Name],
+                                     realName: Option[Name],
+                                     knownAsName: Option[Name],
                                      residentialAddress: Option[Address],
                                      correspondenceAddress: Option[Address]
                                    )

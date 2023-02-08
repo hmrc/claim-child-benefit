@@ -19,6 +19,8 @@ package models.integration
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
+import java.time.LocalDate
+
 final case class DesignatoryDetails(
                                      names: Seq[Name],
                                      addresses: Seq[Address]
@@ -46,7 +48,8 @@ final case class Name(
                        titleType: Int,
                        firstForename: String,
                        secondForename: Option[String],
-                       surname: String
+                       surname: String,
+                       nameEndDate: Option[LocalDate]
                      )
 
 object Name {
@@ -62,7 +65,8 @@ final case class Address(
                           addressLine3: Option[String],
                           addressLine4: Option[String],
                           addressLine5: Option[String],
-                          addressPostcode: Option[String]
+                          addressPostcode: Option[String],
+                          addressEndDate: Option[LocalDate]
                         )
 
 object Address {
