@@ -103,7 +103,7 @@ class SupplementaryDataServiceSpec extends AnyFreeSpec with Matchers with Mockit
       sdesCorrelationId = "correlationId"
     )
 
-    "must store the file in object store and notify SDES" in {
+    "must store the file in object store store the submission item in mongo" in {
 
       val submissionItemCaptor: ArgumentCaptor[SubmissionItem] =
         ArgumentCaptor.forClass(classOf[SubmissionItem])
