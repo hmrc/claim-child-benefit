@@ -31,6 +31,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 import util.WireMockHelper
 import utils.NinoGenerator
 
+import java.time.LocalDate
+
 class IfConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with IntegrationPatience with WireMockHelper {
 
   private lazy val app: Application =
@@ -53,7 +55,8 @@ class IfConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with I
       titleType = 0,
       firstForename = "first",
       secondForename = Some("middle"),
-      surname = "surname"
+      surname = "surname",
+      nameEndDate = Some(LocalDate.now)
     )
 
     val address = Address(
@@ -65,7 +68,8 @@ class IfConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with I
       addressLine3 = None,
       addressLine4 = None,
       addressLine5 = None,
-      addressPostcode = Some("postcode")
+      addressPostcode = Some("postcode"),
+      addressEndDate = Some(LocalDate.now)
     )
 
     val expectedResult = DesignatoryDetails(

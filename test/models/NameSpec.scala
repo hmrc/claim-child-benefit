@@ -20,6 +20,8 @@ import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
+import java.time.LocalDate
+
 class NameSpec extends AnyFreeSpec with Matchers with OptionValues {
 
   "apply" - {
@@ -30,7 +32,8 @@ class NameSpec extends AnyFreeSpec with Matchers with OptionValues {
       titleType = 1,
       firstForename = "first",
       secondForename = Some("middle"),
-      surname = "surname"
+      surname = "surname",
+      nameEndDate = Some(LocalDate.now)
     )
 
     val output = models.Name(

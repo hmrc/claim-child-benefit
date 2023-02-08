@@ -20,6 +20,8 @@ import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
+import java.time.LocalDate
+
 class AddressSpec extends AnyFreeSpec with Matchers with OptionValues {
 
   "apply" - {
@@ -33,7 +35,8 @@ class AddressSpec extends AnyFreeSpec with Matchers with OptionValues {
       addressLine3 = Some("line3"),
       addressLine4 = Some("line4"),
       addressLine5 = Some("line5"),
-      addressPostcode = Some("postcode")
+      addressPostcode = Some("postcode"),
+      addressEndDate = Some(LocalDate.now)
     )
 
     val expectedOutput = models.Address(
@@ -45,6 +48,10 @@ class AddressSpec extends AnyFreeSpec with Matchers with OptionValues {
       postcode = Some("postcode"),
       country = None
     )
+
+    "must return an address" in {
+      Address(input) mustBe expectedOutput
+    }
 
     "must return an address with no country if the country code is missing" in {
       Address(input.copy(countryCode = None)).country mustBe None
