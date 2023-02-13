@@ -16,15 +16,24 @@
 
 package config
 
-import com.google.inject.AbstractModule
+import cats.effect.unsafe.IORuntime
+import play.api.inject.Binding
+import play.api.{Configuration, Environment}
+import uk.gov.hmrc.crypto.{Decrypter, Encrypter}
+import workers.SdesNotificationWorker
 
 import java.time.Clock
 
-class Module extends AbstractModule {
+class Module extends play.api.inject.Module {
 
-  override def configure(): Unit = {
+  override def bindings(environment: Environment, configuration: Configuration): collection.Seq[Binding[_]] = {
 
-    bind(classOf[AppConfig]).asEagerSingleton()
-    bind(classOf[Clock]).toInstance(Clock.systemUTC)
+    Seq(
+      bind[AppConfig].toSelf.eagerly(),
+      bind[Clock].toInstance(Clock.systemUTC()),
+      bind[IORuntime].toProvider[IORuntimeProvider],
+      bind[SdesNotificationWorker].toSelf.eagerly(),
+      bind[Encrypter with Decrypter].toProvider[CryptoProvider]
+    )
   }
 }

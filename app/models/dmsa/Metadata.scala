@@ -14,33 +14,27 @@
  * limitations under the License.
  */
 
-package models
+package models.dmsa
 
-import play.api.libs.json._
+import play.api.libs.json.{Format, Json, OFormat}
+import uk.gov.hmrc.crypto.{Decrypter, Encrypter}
 import uk.gov.hmrc.crypto.Sensitive.SensitiveString
 import uk.gov.hmrc.crypto.json.JsonEncryption
-import uk.gov.hmrc.crypto.{Decrypter, Encrypter}
 
-final case class AllowlistEntry(nino: SensitiveString)
+final case class Metadata(nino: SensitiveString)
 
-object AllowlistEntry {
+object Metadata {
 
-  implicit def reads(implicit crypto: Encrypter with Decrypter): Reads[AllowlistEntry] = {
+  def apply(nino: String): Metadata =
+    new Metadata(
+      nino = SensitiveString(nino)
+    )
 
-    implicit val sensitiveStringFormat: Format[SensitiveString] =
-      JsonEncryption.sensitiveEncrypterDecrypter(SensitiveString.apply)
-
-    (__ \ "_id").read[SensitiveString].map(AllowlistEntry.apply)
-  }
-
-  implicit def writes(implicit crypto: Encrypter with Decrypter): OWrites[AllowlistEntry] = {
+  implicit def format(implicit crypto: Encrypter with Decrypter): OFormat[Metadata] = {
 
     implicit val sensitiveStringFormat: Format[SensitiveString] =
       JsonEncryption.sensitiveEncrypterDecrypter(SensitiveString.apply)
 
-    (__ \ "_id").write[SensitiveString].contramap(_.nino)
+    Json.format
   }
-
-  implicit def format(implicit crypto: Encrypter with Decrypter): OFormat[AllowlistEntry] =
-    OFormat(reads, writes)
 }

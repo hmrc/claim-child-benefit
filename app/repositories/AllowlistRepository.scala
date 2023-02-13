@@ -16,10 +16,10 @@
 
 package repositories
 
-import models.{AllowlistEntry, AllowlistEntryFormatProvider, Done}
-import org.mongodb.scala.model._
+import models.{AllowlistEntry, Done}
+import uk.gov.hmrc.crypto.{Decrypter, Encrypter}
 import uk.gov.hmrc.mongo.MongoComponent
-import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -27,14 +27,12 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class AllowlistRepository @Inject()(
                                      mongoComponent: MongoComponent,
-                                     formatProvider: AllowlistEntryFormatProvider
-                                   )(implicit ec: ExecutionContext)
+                                   )(implicit ec: ExecutionContext, crypto: Encrypter with Decrypter)
   extends PlayMongoRepository[AllowlistEntry](
     collectionName = "allowlist",
     mongoComponent = mongoComponent,
-    domainFormat   = formatProvider.format,
-    indexes        = Nil,
-    extraCodecs    = Seq(Codecs.playFormatCodec(formatProvider.sensitiveStringFormat))
+    domainFormat   = AllowlistEntry.format,
+    indexes        = Nil
   ) {
 
   def exists(entry: AllowlistEntry): Future[Boolean] =

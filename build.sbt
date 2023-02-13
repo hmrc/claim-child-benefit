@@ -1,17 +1,20 @@
+import uk.gov.hmrc.DefaultBuildSettings.targetJvm
 import uk.gov.hmrc.DefaultBuildSettings.integrationTestSettings
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 
 lazy val microservice = Project("claim-child-benefit", file("."))
-  .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
+  .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin, BuildInfoPlugin)
   .settings(
     majorVersion        := 0,
-    scalaVersion        := "2.13.8",
+    scalaVersion        := "2.13.10",
+    targetJvm           := "jvm-11",
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
     // https://www.scala-lang.org/2021/01/12/configuring-and-suppressing-warnings.html
     // suppress warnings in generated routes files
     scalacOptions += "-Wconf:src=routes/.*:s",
+    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
+    buildInfoKeys := Seq[BuildInfoKey](name, version, PlayKeys.playDefaultPort),
+    buildInfoPackage := "buildinfo",
   )
-  .settings(publishingSettings: _*)
   .settings(inConfig(Test)(testSettings): _*)
   .configs(IntegrationTest)
   .settings(integrationTestSettings(): _*)

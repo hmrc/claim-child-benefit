@@ -8,5 +8,8 @@ POST        /user-data/keep-alive   controllers.UserDataController.keepAlive
 
 GET         /designatory-details    controllers.DesignatoryDetailsController.get
 
+POST        /supplementary-data     controllers.SupplementaryDataController.submit
+POST        /sdes/callback          controllers.SdesCallbackController.callback
+
 GET         /allow-list             controllers.AllowlistController.get
 PUT         /allow-list             controllers.AllowlistController.set
