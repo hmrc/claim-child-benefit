@@ -32,7 +32,7 @@ class CbsProxyController @Inject() (
 
   def submit: Action[JsObject] = Action.async(parse.tolerantJson[JsObject]) { implicit request =>
     request.headers.get("CorrelationId").map { correlationId =>
-      connector.submit(request.body, Some(correlationId)).map { response =>
+      connector.submit(request.body, correlationId).map { response =>
         Status(response.status)(response.json)
       }
     }.getOrElse(Future.successful(BadRequest(missingCorrelationId)))
