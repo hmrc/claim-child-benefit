@@ -36,13 +36,13 @@ class CbsProxyConnector @Inject()(
   private val environment: String = configuration.get[String]("microservice.services.cbs.environment")
   private val bearerToken: String = configuration.get[String]("microservice.services.cbs.auth")
 
-  def submit(data: JsObject, correlationId: Option[String])(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  def submit(data: JsObject, correlationId: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     httpClient
       .post(url"${service.baseUrl}/child-benefit/claim")
       .setHeader(
         "Authorization" -> s"Bearer $bearerToken",
         "Environment"   -> environment,
-        "CorrelationId" -> correlationId.getOrElse(UUID.randomUUID().toString)
+        "CorrelationId" -> correlationId
       )
       .withBody(data)
       .execute

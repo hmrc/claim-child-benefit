@@ -98,7 +98,7 @@ class CbsProxyControllerSpec
       status(result) mustEqual CREATED
       contentAsJson(result) mustEqual responseBody
 
-      verify(mockConnector).submit(eqTo(requestBody), eqTo(Some(correlationId)))(any())
+      verify(mockConnector).submit(eqTo(requestBody), eqTo(correlationId))(any())
 //      verify(mockStubBehaviour).stubAuth(Some(permission), Retrieval.EmptyRetrieval) TODO
     }
 

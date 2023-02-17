@@ -63,7 +63,7 @@ class CbsProxyConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures 
           )
       )
 
-      val result = connector.submit(Json.obj(), Some("correlationId"))(hc).futureValue
+      val result = connector.submit(Json.obj(), "correlationId")(hc).futureValue
 
       result.status mustEqual CREATED
       result.body mustEqual Json.stringify(body)
@@ -82,7 +82,7 @@ class CbsProxyConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures 
           )
       )
 
-      connector.submit(Json.obj(), Some("correlationId"))(hc).failed.futureValue
+      connector.submit(Json.obj(), "correlationId")(hc).failed.futureValue
     }
   }
 }
