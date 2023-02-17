@@ -26,7 +26,7 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, BaseController, ControllerComponents, MultipartFormData}
 import services.{PdfService, SupplementaryDataService}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.internalauth.client.{BackendAuthComponents, IAAction, Predicate, Resource, ResourceLocation, ResourceType, Retrieval}
+import uk.gov.hmrc.internalauth.client._
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import java.io.IOException
@@ -45,7 +45,7 @@ class SupplementaryDataController @Inject() (
   private val permission = Predicate.Permission(
     resource = Resource(
       resourceType = ResourceType("claim-child-benefit"),
-      resourceLocation = ResourceLocation("submit")
+      resourceLocation = ResourceLocation("supplementary-data")
     ),
     action = IAAction("WRITE")
   )
