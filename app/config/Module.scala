@@ -28,12 +28,17 @@ class Module extends play.api.inject.Module {
 
   override def bindings(environment: Environment, configuration: Configuration): collection.Seq[Binding[_]] = {
 
+    val authTokenInitialiserBindings: Seq[Binding[_]] =
+      if (configuration.get[Boolean]("create-internal-auth-token-on-start")) {
+        Seq(bind[InternalAuthTokenInitialiser].to[InternalAuthTokenInitialiserImpl].eagerly())
+      } else Seq(bind[InternalAuthTokenInitialiser].to[NoOpInternalAuthTokenInitialiser].eagerly())
+
     Seq(
       bind[AppConfig].toSelf.eagerly(),
       bind[Clock].toInstance(Clock.systemUTC()),
       bind[IORuntime].toProvider[IORuntimeProvider],
       bind[SdesNotificationWorker].toSelf.eagerly(),
       bind[Encrypter with Decrypter].toProvider[CryptoProvider]
-    )
+    ) ++ authTokenInitialiserBindings
   }
 }
