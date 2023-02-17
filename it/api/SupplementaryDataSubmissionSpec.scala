@@ -145,7 +145,7 @@ class SupplementaryDataSubmissionSpec extends AnyFreeSpec with Matchers with Sca
           "permissions" -> Seq(
             Json.obj(
               "resourceType" -> "claim-child-benefit",
-              "resourceLocation" -> "submit",
+              "resourceLocation" -> "*",
               "actions" -> List("WRITE")
             )
           )

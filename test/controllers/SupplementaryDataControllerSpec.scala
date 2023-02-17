@@ -58,7 +58,7 @@ class SupplementaryDataControllerSpec extends AnyFreeSpec with Matchers with Sca
   private val permission = Predicate.Permission(
     resource = Resource(
       resourceType = ResourceType("claim-child-benefit"),
-      resourceLocation = ResourceLocation("submit")
+      resourceLocation = ResourceLocation("supplementary-data")
     ),
     action = IAAction("WRITE")
   )
