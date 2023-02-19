@@ -17,14 +17,16 @@
 package services
 
 import connectors.IfConnector
-import models.Country
+import models.{Country, DesignatoryDetails, Done}
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchersSugar.eqTo
 import org.mockito.MockitoSugar
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.inject.bind
+import repositories.DesignatoryDetailsCacheRepository
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.NinoGenerator
 
@@ -34,174 +36,210 @@ import scala.concurrent.Future
 class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFutures {
 
   private val mockIfConnector = mock[IfConnector]
+  private val mockRepository = mock[DesignatoryDetailsCacheRepository]
 
   private val app = GuiceApplicationBuilder()
     .overrides(
-      bind[IfConnector].toInstance(mockIfConnector)
+      bind[IfConnector].toInstance(mockIfConnector),
+      bind[DesignatoryDetailsCacheRepository].toInstance(mockRepository)
     )
     .build()
 
   private val service = app.injector.instanceOf[DesignatoryDetailsService]
 
+  val ifResponse = {
+
+    val realName1 = models.integration.Name(
+      nameSequenceNumber = 1,
+      nameType = 1,
+      titleType = 1,
+      firstForename = "first",
+      secondForename = Some("middle"),
+      surname = "real1",
+      nameEndDate = None
+    )
+
+    val realName2 = realName1.copy(
+      nameSequenceNumber = 2,
+      surname = "real2"
+    )
+
+    val realName3 = realName1.copy(
+      nameSequenceNumber = 3,
+      surname = "real3",
+      nameEndDate = Some(LocalDate.now)
+    )
+
+    val knownAs1 = realName1.copy(
+      nameSequenceNumber = 4,
+      nameType = 2,
+      surname = "knownAs1"
+    )
+
+    val knownAs2 = realName1.copy(
+      nameSequenceNumber = 5,
+      nameType = 2,
+      surname = "knownAs2"
+    )
+
+    val knownAs3 = realName1.copy(
+      nameSequenceNumber = 6,
+      nameType = 2,
+      surname = "knownAs3",
+      nameEndDate = Some(LocalDate.now)
+    )
+
+    val residentialAddress1 = models.integration.Address(
+      addressSequenceNumber = 1,
+      countryCode = Some(1),
+      addressType = 1,
+      addressLine1 = "line1",
+      addressLine2 = Some("line2"),
+      addressLine3 = Some("line3"),
+      addressLine4 = Some("line4"),
+      addressLine5 = Some("line5"),
+      addressPostcode = Some("residentialAddress1"),
+      addressEndDate = None
+    )
+
+    val correspondenceAddress1 = residentialAddress1.copy(
+      addressSequenceNumber = 2,
+      addressType = 2,
+      addressPostcode = Some("correspondenceAddress1")
+    )
+
+    val residentialAddress2 = residentialAddress1.copy(
+      addressSequenceNumber = 3,
+      addressPostcode = Some("residentialAddress2")
+    )
+
+    val correspondenceAddress2 = residentialAddress1.copy(
+      addressSequenceNumber = 4,
+      addressType = 2,
+      addressPostcode = Some("correspondenceAddress2")
+    )
+
+    val residentialAddress3 = residentialAddress1.copy(
+      addressSequenceNumber = 5,
+      addressPostcode = Some("residentialAddress3"),
+      addressEndDate = Some(LocalDate.now)
+    )
+
+    val correspondenceAddress3 = residentialAddress1.copy(
+      addressSequenceNumber = 6,
+      addressType = 2,
+      addressPostcode = Some("correspondenceAddress3"),
+      addressEndDate = Some(LocalDate.now)
+    )
+
+    models.integration.DesignatoryDetails(
+      names = List(
+        realName1,
+        knownAs1,
+        realName2,
+        knownAs2,
+        realName3,
+        knownAs3
+      ),
+      addresses = List(
+        residentialAddress1,
+        residentialAddress2,
+        correspondenceAddress1,
+        correspondenceAddress2,
+        residentialAddress3,
+        correspondenceAddress3
+      )
+    )
+  }
+
+  val expectedResponse = {
+
+    val realName = models.Name(
+      title = Some("Mr"),
+      firstName = "first",
+      middleName = Some("middle"),
+      lastName = "real2"
+    )
+
+    val knownAsName = models.Name(
+      title = Some("Mr"),
+      firstName = "first",
+      middleName = Some("middle"),
+      lastName = "knownAs2"
+    )
+
+    val residentialAddress = models.Address(
+      line1 = "line1",
+      line2 = Some("line2"),
+      line3 = Some("line3"),
+      line4 = Some("line4"),
+      line5 = Some("line5"),
+      country = Some(Country("GB", "United Kingdom")),
+      postcode = Some("residentialAddress2")
+    )
+
+    val correspondenceAddress = models.Address(
+      line1 = "line1",
+      line2 = Some("line2"),
+      line3 = Some("line3"),
+      line4 = Some("line4"),
+      line5 = Some("line5"),
+      country = Some(Country("GB", "United Kingdom")),
+      postcode = Some("correspondenceAddress2")
+    )
+
+    models.DesignatoryDetails(
+      realName = Some(realName),
+      knownAsName = Some(knownAsName),
+      residentialAddress = Some(residentialAddress),
+      correspondenceAddress = Some(correspondenceAddress)
+    )
+  }
+
   "getDesignatoryDetails" - {
 
-    "must return designatory details for the given nino" in {
+    "when details have not been cached" - {
 
-      implicit val hc: HeaderCarrier = HeaderCarrier()
-      val nino = NinoGenerator.randomNino()
+      "must cache details and return designatory details for the given nino" in {
 
-      val ifResponse = {
+        implicit val hc: HeaderCarrier = HeaderCarrier()
+        val nino = NinoGenerator.randomNino()
 
-        val realName1 = models.integration.Name(
-          nameSequenceNumber = 1,
-          nameType = 1,
-          titleType = 1,
-          firstForename = "first",
-          secondForename = Some("middle"),
-          surname = "real1",
-          nameEndDate = None
-        )
+        when(mockIfConnector.getDesignatoryDetails(any())(any())).thenReturn(Future.successful(ifResponse))
+        when(mockRepository.set(any(), any())).thenReturn(Future.successful(Done))
+        when(mockRepository.get(any())).thenReturn(Future.successful(None))
 
-        val realName2 = realName1.copy(
-          nameSequenceNumber = 2,
-          surname = "real2"
-        )
-
-        val realName3 = realName1.copy(
-          nameSequenceNumber = 3,
-          surname = "real3",
-          nameEndDate = Some(LocalDate.now)
-        )
-
-        val knownAs1 = realName1.copy(
-          nameSequenceNumber = 4,
-          nameType = 2,
-          surname = "knownAs1"
-        )
-
-        val knownAs2 = realName1.copy(
-          nameSequenceNumber = 5,
-          nameType = 2,
-          surname = "knownAs2"
-        )
-
-        val knownAs3 = realName1.copy(
-          nameSequenceNumber = 6,
-          nameType = 2,
-          surname = "knownAs3",
-          nameEndDate = Some(LocalDate.now)
-        )
-
-        val residentialAddress1 = models.integration.Address(
-          addressSequenceNumber = 1,
-          countryCode = Some(1),
-          addressType = 1,
-          addressLine1 = "line1",
-          addressLine2 = Some("line2"),
-          addressLine3 = Some("line3"),
-          addressLine4 = Some("line4"),
-          addressLine5 = Some("line5"),
-          addressPostcode = Some("residentialAddress1"),
-          addressEndDate = None
-        )
-
-        val correspondenceAddress1 = residentialAddress1.copy(
-          addressSequenceNumber = 2,
-          addressType = 2,
-          addressPostcode = Some("correspondenceAddress1")
-        )
-
-        val residentialAddress2 = residentialAddress1.copy(
-          addressSequenceNumber = 3,
-          addressPostcode = Some("residentialAddress2")
-        )
-
-        val correspondenceAddress2 = residentialAddress1.copy(
-          addressSequenceNumber = 4,
-          addressType = 2,
-          addressPostcode = Some("correspondenceAddress2")
-        )
-
-        val residentialAddress3 = residentialAddress1.copy(
-          addressSequenceNumber = 5,
-          addressPostcode = Some("residentialAddress3"),
-          addressEndDate = Some(LocalDate.now)
-        )
-
-        val correspondenceAddress3 = residentialAddress1.copy(
-          addressSequenceNumber = 6,
-          addressType = 2,
-          addressPostcode = Some("correspondenceAddress3"),
-          addressEndDate = Some(LocalDate.now)
-        )
-
-        models.integration.DesignatoryDetails(
-          names = List(
-            realName1,
-            knownAs1,
-            realName2,
-            knownAs2,
-            realName3,
-            knownAs3
-          ),
-          addresses = List(
-            residentialAddress1,
-            residentialAddress2,
-            correspondenceAddress1,
-            correspondenceAddress2,
-            residentialAddress3,
-            correspondenceAddress3
-          )
-        )
+        service.getDesignatoryDetails(nino).futureValue mustEqual expectedResponse
+        verify(mockRepository, times(1)).get(eqTo(nino))
       }
 
-      val expectedResponse = {
+      "must return details when they cannot be cached" in {
 
-        val realName = models.Name(
-          title = Some("Mr"),
-          firstName = "first",
-          middleName = Some("middle"),
-          lastName = "real2"
-        )
+        implicit val hc: HeaderCarrier = HeaderCarrier()
+        val nino = NinoGenerator.randomNino()
 
-        val knownAsName = models.Name(
-          title = Some("Mr"),
-          firstName = "first",
-          middleName = Some("middle"),
-          lastName = "knownAs2"
-        )
+        when(mockIfConnector.getDesignatoryDetails(any())(any())).thenReturn(Future.successful(ifResponse))
+        when(mockRepository.set(any(), any())).thenReturn(Future.failed(new RuntimeException("foo")))
+        when(mockRepository.get(any())).thenReturn(Future.successful(None))
 
-        val residentialAddress = models.Address(
-          line1 = "line1",
-          line2 = Some("line2"),
-          line3 = Some("line3"),
-          line4 = Some("line4"),
-          line5 = Some("line5"),
-          country = Some(Country("GB", "United Kingdom")),
-          postcode = Some("residentialAddress2")
-        )
-
-        val correspondenceAddress = models.Address(
-          line1 = "line1",
-          line2 = Some("line2"),
-          line3 = Some("line3"),
-          line4 = Some("line4"),
-          line5 = Some("line5"),
-          country = Some(Country("GB", "United Kingdom")),
-          postcode = Some("correspondenceAddress2")
-        )
-
-        models.DesignatoryDetails(
-          realName = Some(realName),
-          knownAsName = Some(knownAsName),
-          residentialAddress = Some(residentialAddress),
-          correspondenceAddress = Some(correspondenceAddress)
-        )
+        service.getDesignatoryDetails(nino).futureValue mustEqual expectedResponse
+        verify(mockRepository, times(1)).get(eqTo(nino))
       }
+    }
 
-      when(mockIfConnector.getDesignatoryDetails(any())(any())).thenReturn(Future.successful(ifResponse))
+    "when details have been cached" - {
 
-      service.getDesignatoryDetails(nino).futureValue mustEqual expectedResponse
+      "must return the cached details" in {
+
+        implicit val hc: HeaderCarrier = HeaderCarrier()
+        val nino = NinoGenerator.randomNino()
+
+        val details = DesignatoryDetails(None, None, None, None)
+
+        when(mockRepository.get(any())).thenReturn(Future.successful(Some(details)))
+
+        service.getDesignatoryDetails(nino).futureValue mustEqual details
+      }
     }
 
     "must fail when the IfConnector call fails" in {
@@ -210,6 +248,7 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
       val nino = NinoGenerator.randomNino()
 
       when(mockIfConnector.getDesignatoryDetails(any())(any())).thenReturn(Future.failed(new RuntimeException()))
+      when(mockRepository.get(any())).thenReturn(Future.successful(None))
 
       service.getDesignatoryDetails(nino).failed.futureValue
     }
