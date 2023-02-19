@@ -16,19 +16,25 @@
 
 package repositories
 
+import com.fasterxml.jackson.core.JsonParseException
 import config.AppConfig
 import models.{Done, UserData}
 import org.mockito.MockitoSugar
+import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.model.Filters
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import play.api.Configuration
 import play.api.libs.json.Json
+import uk.gov.hmrc.crypto.{Decrypter, Encrypter, SymmetricCryptoFactory}
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
+import java.security.SecureRandom
 import java.time.temporal.ChronoUnit
 import java.time.{Clock, Instant, ZoneId}
+import java.util.Base64
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class UserDataRepositorySpec
@@ -47,6 +53,17 @@ class UserDataRepositorySpec
   private val mockAppConfig = mock[AppConfig]
   when(mockAppConfig.userDataTtlInDays) thenReturn 1
 
+  private val aesKey = {
+    val aesKey = new Array[Byte](32)
+    new SecureRandom().nextBytes(aesKey)
+    Base64.getEncoder.encodeToString(aesKey)
+  }
+
+  private val configuration = Configuration("crypto.key" -> aesKey)
+
+  private implicit val crypto: Encrypter with Decrypter =
+    SymmetricCryptoFactory.aesGcmCryptoFromConfig("crypto", configuration.underlying)
+
   protected override val repository = new UserDataRepository(
     mongoComponent = mongoComponent,
     appConfig = mockAppConfig,
@@ -64,6 +81,24 @@ class UserDataRepositorySpec
 
       setResult mustEqual Done
       updatedRecord mustEqual expectedResult
+    }
+
+    "must store the data section as encrypted bytes" in {
+
+      repository.set(userData).futureValue
+
+      val record = repository.collection
+        .find[BsonDocument](Filters.equal("_id", userData.id))
+        .headOption()
+        .futureValue
+        .value
+
+      val json = Json.parse(record.toJson)
+      val data = (json \ "data").as[String]
+
+      assertThrows[JsonParseException] {
+        Json.parse(data)
+      }
     }
   }
 
