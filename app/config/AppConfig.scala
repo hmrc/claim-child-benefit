@@ -26,4 +26,5 @@ class AppConfig @Inject()(config: Configuration) {
 
   val appName: String = config.get[String]("appName")
   val userDataTtlInDays: Int = config.get[Int]("mongodb.userDataTtlInDays")
+  val designatoryDetailsTtlInSeconds = config.get[Int]("mongodb.designatoryDetailsTtlInSeconds")
 }
