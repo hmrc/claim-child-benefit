@@ -21,13 +21,14 @@ import models.{Done, UserData}
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import play.api.libs.json.Format
+import uk.gov.hmrc.crypto.{Decrypter, Encrypter}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import java.time.{Clock, Instant}
 import java.util.concurrent.TimeUnit
-import javax.inject.{Singleton, Inject}
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -35,11 +36,11 @@ class UserDataRepository @Inject()(
                                     mongoComponent: MongoComponent,
                                     appConfig: AppConfig,
                                     clock: Clock
-                                  )(implicit ec: ExecutionContext)
+                                  )(implicit ec: ExecutionContext, crypto: Encrypter with Decrypter)
   extends PlayMongoRepository[UserData](
     collectionName = "user-data",
     mongoComponent = mongoComponent,
-    domainFormat   = UserData.format,
+    domainFormat   = UserData.encryptedFormat,
     indexes        = Seq(
       IndexModel(
         Indexes.ascending("lastUpdated"),
