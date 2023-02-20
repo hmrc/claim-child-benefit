@@ -17,7 +17,9 @@
 package services
 
 import connectors.IfConnector
+import logging.Logging
 import models.{Address, DesignatoryDetails, Name}
+import repositories.DesignatoryDetailsCacheRepository
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.{Inject, Singleton}
@@ -25,37 +27,52 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class DesignatoryDetailsService @Inject() (
-                                            connector: IfConnector
-                                          )(implicit ec: ExecutionContext) {
+                                            connector: IfConnector,
+                                            cache: DesignatoryDetailsCacheRepository
+                                          )(implicit ec: ExecutionContext) extends Logging {
 
-  def getDesignatoryDetails(nino: String)(implicit hc: HeaderCarrier): Future[DesignatoryDetails] =
-    connector.getDesignatoryDetails(nino).map { result =>
+  def getDesignatoryDetails(nino: String)(implicit hc: HeaderCarrier): Future[DesignatoryDetails] = {
+    cache.get(nino).flatMap {
+      _.map(Future.successful)
+        .getOrElse {
+          connector.getDesignatoryDetails(nino).flatMap { result =>
 
-      val realName = result.names
-        .filter(n => n.nameType == 1 && n.nameEndDate.isEmpty)
-        .maxByOption(_.nameSequenceNumber)
-        .map(Name(_))
+            val realName = result.names
+              .filter(n => n.nameType == 1 && n.nameEndDate.isEmpty)
+              .maxByOption(_.nameSequenceNumber)
+              .map(Name(_))
 
-      val knownAs = result.names
-        .filter(n => n.nameType == 2 && n.nameEndDate.isEmpty)
-        .maxByOption(_.nameSequenceNumber)
-        .map(Name(_))
+            val knownAs = result.names
+              .filter(n => n.nameType == 2 && n.nameEndDate.isEmpty)
+              .maxByOption(_.nameSequenceNumber)
+              .map(Name(_))
 
-      val residentialAddress = result.addresses
-        .filter(a => a.addressType == 1 && a.addressEndDate.isEmpty)
-        .maxByOption(_.addressSequenceNumber)
-        .map(Address(_))
+            val residentialAddress = result.addresses
+              .filter(a => a.addressType == 1 && a.addressEndDate.isEmpty)
+              .maxByOption(_.addressSequenceNumber)
+              .map(Address(_))
 
-      val correspondenceAddress = result.addresses
-        .filter(a => a.addressType == 2 && a.addressEndDate.isEmpty)
-        .maxByOption(_.addressSequenceNumber)
-        .map(Address(_))
+            val correspondenceAddress = result.addresses
+              .filter(a => a.addressType == 2 && a.addressEndDate.isEmpty)
+              .maxByOption(_.addressSequenceNumber)
+              .map(Address(_))
 
-      DesignatoryDetails(
-        realName = realName,
-        knownAsName = knownAs,
-        residentialAddress = residentialAddress,
-        correspondenceAddress = correspondenceAddress
-      )
+            val details = DesignatoryDetails(
+              realName = realName,
+              knownAsName = knownAs,
+              residentialAddress = residentialAddress,
+              correspondenceAddress = correspondenceAddress
+            )
+
+            cache.set(nino, details)
+              .map(_ => details)
+              .recover {
+                case e: Exception =>
+                  logger.warn("Error caching designatory details", e.getMessage)
+                  details
+              }
+          }
+        }
     }
+  }
 }

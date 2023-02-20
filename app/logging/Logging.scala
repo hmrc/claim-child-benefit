@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-package config
+package logging
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+import org.slf4j.{Logger, LoggerFactory}
 
-import scala.concurrent.duration.Duration
+trait Logging {
 
-@Singleton
-class AppConfig @Inject()(config: Configuration) {
-
-  val appName: String = config.get[String]("appName")
-  val userDataTtlInDays: Int = config.get[Int]("mongodb.userDataTtlInDays")
-  val designatoryDetailsTtlInSeconds = config.get[Int]("mongodb.designatoryDetailsTtlInSeconds")
+  protected val logger: Logger =
+    LoggerFactory.getLogger("application." + getClass.getCanonicalName)
 }
