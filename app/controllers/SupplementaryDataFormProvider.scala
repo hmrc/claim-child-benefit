@@ -22,17 +22,34 @@ import play.api.data.Forms._
 import uk.gov.hmrc.crypto.Sensitive.SensitiveString
 import uk.gov.hmrc.domain.Nino
 
+import java.time.temporal.ChronoUnit
+import java.time.{Instant, LocalDateTime, ZoneOffset}
+import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import scala.util.Try
 
 @Singleton
 class SupplementaryDataFormProvider @Inject()() {
 
+  private val ninoField = text
+    .verifying("error.metadata.nino.invalid", string => Try(Nino(string)).isSuccess)
+    .transform(SensitiveString.apply, (_: SensitiveString).decryptedValue)
+
+  private val localDateTimeField = localDateTime("yyyy-MM-dd'T'HH:mm:ss")
+    .transform[Instant](
+      _.toInstant(ZoneOffset.UTC)
+        .truncatedTo(ChronoUnit.SECONDS),
+      LocalDateTime.ofInstant(_, ZoneOffset.UTC)
+        .truncatedTo(ChronoUnit.SECONDS)
+    )
+
+  private val correlationIdField = uuid.transform[String](_.toString, UUID.fromString)
+
   val form: Form[Metadata] = Form(
     mapping(
-      "metadata.nino" -> text
-        .verifying("error.metadata.nino.invalid", string => Try(Nino(string)).isSuccess)
-        .transform(SensitiveString.apply, (_: SensitiveString).decryptedValue)
+      "metadata.nino"           -> ninoField,
+      "metadata.submissionDate" -> localDateTimeField,
+      "metadata.correlationId"  -> correlationIdField
     )(Metadata.apply)(Metadata.unapply)
   )
 }

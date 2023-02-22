@@ -22,6 +22,11 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import utils.NinoGenerator
 
+import java.time.{Instant, LocalDateTime, ZoneOffset}
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+import java.util.UUID
+
 class SupplementaryDataFormProviderSpec extends AnyFreeSpec with Matchers with OptionValues {
 
   private val form = new SupplementaryDataFormProvider().form
@@ -29,10 +34,20 @@ class SupplementaryDataFormProviderSpec extends AnyFreeSpec with Matchers with O
   "must return metadata when given valid input" in {
 
     val nino = NinoGenerator.randomNino()
-    val metadata = Metadata(nino)
-    val data = Map("metadata.nino" -> nino)
+    val submissionDate = Instant.now().truncatedTo(ChronoUnit.SECONDS)
+    val submissionDateString = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.ofInstant(submissionDate, ZoneOffset.UTC))
+    val correlationId = UUID.randomUUID().toString
+    val metadata = Metadata(nino, submissionDate, correlationId)
 
-    form.bind(data).value.value mustEqual metadata
+    val data = Map(
+      "metadata.nino"           -> nino,
+      "metadata.submissionDate" -> submissionDateString,
+      "metadata.correlationId"  -> correlationId
+    )
+
+    val boundForm = form.bind(data)
+    boundForm.errors mustBe empty
+    boundForm.value.value mustEqual metadata
   }
 
   "metadata.nino" - {
@@ -45,6 +60,32 @@ class SupplementaryDataFormProviderSpec extends AnyFreeSpec with Matchers with O
     "must fail to bind if the input is not a valid nino" in {
       val error = form.bind(Map("metadata.nino" -> "foobar"))("metadata.nino").error.value
       error.message mustEqual "error.metadata.nino.invalid"
+    }
+  }
+
+  "metadata.submissionDate" - {
+
+    "must fail to bind if there is no submissionDate" in {
+      val error = form.bind(Map.empty[String, String])("metadata.submissionDate").error.value
+      error.message mustEqual "error.required"
+    }
+
+    "must fail to bind if the input is not a valid date time" in {
+      val error = form.bind(Map("metadata.submissionDate" -> "foobar"))("metadata.submissionDate").error.value
+      error.message mustEqual "error.localDateTime"
+    }
+  }
+
+  "metadata.correlationId" - {
+
+    "must fail to bind if there is no correlationId" in {
+      val error = form.bind(Map.empty[String, String])("metadata.correlationId").error.value
+      error.message mustEqual "error.required"
+    }
+
+    "must fail to bind if the correlationId is not a valid uuid" in {
+      val error = form.bind(Map("metadata.correlationId" -> "foobar"))("metadata.correlationId").error.value
+      error.message mustEqual "error.uuid"
     }
   }
 }

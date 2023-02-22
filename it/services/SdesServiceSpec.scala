@@ -78,21 +78,24 @@ class SdesServiceSpec extends AnyFreeSpec with Matchers
 
   private val service = app.injector.instanceOf[SdesService]
 
-  private def randomItem = SubmissionItem(
-    id = UUID.randomUUID().toString,
-    status = SubmissionItemStatus.Submitted,
-    objectSummary = ObjectSummary(
-      location = "location",
-      contentLength = 1337,
-      contentMd5 = "hash",
-      lastModified = clock.instant().minus(2, ChronoUnit.DAYS)
-    ),
-    metadata = Metadata("foobar"),
-    failureReason = None,
-    created = clock.instant().minus(1, ChronoUnit.DAYS),
-    lastUpdated = clock.instant().minus(1, ChronoUnit.DAYS),
-    sdesCorrelationId = UUID.randomUUID().toString,
-  )
+  private def randomItem = {
+    val correlationId = UUID.randomUUID().toString
+    SubmissionItem(
+      id = UUID.randomUUID().toString,
+      status = SubmissionItemStatus.Submitted,
+      objectSummary = ObjectSummary(
+        location = "location",
+        contentLength = 1337,
+        contentMd5 = "hash",
+        lastModified = clock.instant().minus(2, ChronoUnit.DAYS)
+      ),
+      metadata = Metadata("foobar", clock.instant(), correlationId),
+      failureReason = None,
+      created = clock.instant().minus(1, ChronoUnit.DAYS),
+      lastUpdated = clock.instant().minus(1, ChronoUnit.DAYS),
+      sdesCorrelationId = correlationId
+    )
+  }
 
   "notifyOldestSubmittedItem" - {
 

@@ -50,7 +50,7 @@ class DesignatoryDetailsControllerSpec
   private val mockRepo = mock[UserDataRepository]
 
   override def beforeEach(): Unit = {
-    Mockito.reset(
+    Mockito.reset[Any](
       mockService,
       mockAuthConnector,
       mockRepo

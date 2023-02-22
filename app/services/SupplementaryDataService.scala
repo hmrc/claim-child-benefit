@@ -58,6 +58,6 @@ class SupplementaryDataService @Inject() (
       metadata = metadata,
       created = clock.instant(),
       lastUpdated = clock.instant(),
-      sdesCorrelationId = UUID.randomUUID().toString
+      sdesCorrelationId = metadata.correlationId
     )
 }

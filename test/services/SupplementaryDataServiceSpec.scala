@@ -76,7 +76,7 @@ class SupplementaryDataServiceSpec extends AnyFreeSpec with Matchers with Mockit
       .deleteOnExit()
     file.writeText("barfoo")
 
-    val metadata = Metadata("foobar")
+    val metadata = Metadata("foobar", clock.instant(), "correlationId")
 
     val hc = HeaderCarrier(requestId = Some(RequestId("requestId")))
 
@@ -97,7 +97,7 @@ class SupplementaryDataServiceSpec extends AnyFreeSpec with Matchers with Mockit
         lastModified = clock.instant().minus(2, ChronoUnit.DAYS)
       ),
       failureReason = None,
-      metadata = Metadata("foobar"),
+      metadata = Metadata("foobar", clock.instant(), "correlationId"),
       created = clock.instant(),
       lastUpdated = clock.instant(),
       sdesCorrelationId = "correlationId"
@@ -119,7 +119,7 @@ class SupplementaryDataServiceSpec extends AnyFreeSpec with Matchers with Mockit
 
       val actualSubmissionItem = submissionItemCaptor.getValue
 
-      actualSubmissionItem mustEqual expectedSubmissionItem.copy(sdesCorrelationId = actualSubmissionItem.sdesCorrelationId)
+      actualSubmissionItem mustEqual expectedSubmissionItem
     }
 
     "must fail when object store fails" in {

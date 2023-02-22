@@ -68,7 +68,7 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
       lastModified = clock.instant().minus(2, ChronoUnit.DAYS)
     ),
     failureReason = None,
-    metadata = Metadata("nino"),
+    metadata = Metadata("nino", clock.instant(), "correlationId"),
     created = clock.instant().minus(1, ChronoUnit.DAYS),
     lastUpdated = clock.instant().minus(1, ChronoUnit.DAYS),
     sdesCorrelationId = "correlationId"

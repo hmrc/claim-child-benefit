@@ -21,13 +21,25 @@ import uk.gov.hmrc.crypto.{Decrypter, Encrypter}
 import uk.gov.hmrc.crypto.Sensitive.SensitiveString
 import uk.gov.hmrc.crypto.json.JsonEncryption
 
-final case class Metadata(nino: SensitiveString)
+import java.time.Instant
+
+final case class Metadata(
+                           nino: SensitiveString,
+                           submissionDate: Instant,
+                           correlationId: String
+                         )
 
 object Metadata {
 
-  def apply(nino: String): Metadata =
+  def apply(
+             nino: String,
+             submissionDate: Instant,
+             correlationId: String
+           ): Metadata =
     new Metadata(
-      nino = SensitiveString(nino)
+      nino = SensitiveString(nino),
+      submissionDate = submissionDate,
+      correlationId = correlationId
     )
 
   implicit def format(implicit crypto: Encrypter with Decrypter): OFormat[Metadata] = {
