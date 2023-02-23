@@ -24,6 +24,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.HttpReads.Implicits._
 
+import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,10 +35,15 @@ class IfConnector @Inject() (
                             )(implicit ec: ExecutionContext) {
 
   private val service: Service = configuration.get[Service]("microservice.services.integration-framework")
-  private val apiKey: String = configuration.get[String]("microservice.services.integration-framework.api-key")
+  private val apiKey: String = configuration.get[String]("microservice.services.integration-framework.auth")
+  private val originatorId: String = configuration.get[String]("microservice.services.integration-framework.originator-id")
+  private val environment: String = configuration.get[String]("microservice.services.integration-framework.environment")
 
-  def getDesignatoryDetails(nino: String)(implicit hc: HeaderCarrier): Future[DesignatoryDetails] =
+  def getDesignatoryDetails(nino: String, correlationId: String = UUID.randomUUID().toString)(implicit hc: HeaderCarrier): Future[DesignatoryDetails] =
     httpClient.get(url"${service.baseUrl}/individuals/details/NINO/$nino")
       .setHeader(HeaderNames.AUTHORIZATION -> apiKey)
+      .setHeader("OriginatorId" -> originatorId)
+      .setHeader("Environment" -> environment)
+      .setHeader("CorrelationId" -> correlationId)
       .execute[DesignatoryDetails]
 }
