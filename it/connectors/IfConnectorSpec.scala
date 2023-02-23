@@ -32,6 +32,7 @@ import util.WireMockHelper
 import utils.NinoGenerator
 
 import java.time.LocalDate
+import java.util.UUID
 
 class IfConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with IntegrationPatience with WireMockHelper {
 
@@ -39,7 +40,9 @@ class IfConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with I
     GuiceApplicationBuilder()
       .configure(
         "microservice.services.integration-framework.port" -> server.port(),
-        "microservice.services.integration-framework.api-key" -> "api-key"
+        "microservice.services.integration-framework.auth" -> "api-key",
+        "microservice.services.integration-framework.originator-id" -> "originator-id",
+        "microservice.services.integration-framework.environment" -> "env"
       )
       .build()
 
@@ -82,10 +85,14 @@ class IfConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with I
 
       val nino = NinoGenerator.randomNino()
       val url = s"/individuals/details/NINO/$nino"
+      val correlationId = UUID.randomUUID().toString
 
-      server.stubFor(
+        server.stubFor(
         get(urlPathEqualTo(url))
           .withHeader(HeaderNames.AUTHORIZATION, equalTo("api-key"))
+          .withHeader("CorrelationId", equalTo(correlationId))
+          .withHeader("OriginatorId", equalTo("originator-id"))
+          .withHeader("Environment", equalTo("env"))
           .willReturn(
             aResponse()
               .withStatus(OK)
@@ -93,7 +100,7 @@ class IfConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with I
           )
       )
 
-      connector.getDesignatoryDetails(nino)(hc).futureValue mustEqual expectedResult
+      connector.getDesignatoryDetails(nino, correlationId)(hc).futureValue mustEqual expectedResult
     }
 
     "must return a failed future when the server responds with anything else" in {

@@ -207,7 +207,7 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
         implicit val hc: HeaderCarrier = HeaderCarrier()
         val nino = NinoGenerator.randomNino()
 
-        when(mockIfConnector.getDesignatoryDetails(any())(any())).thenReturn(Future.successful(ifResponse))
+        when(mockIfConnector.getDesignatoryDetails(any(), any())(any())).thenReturn(Future.successful(ifResponse))
         when(mockRepository.set(any(), any())).thenReturn(Future.successful(Done))
         when(mockRepository.get(any())).thenReturn(Future.successful(None))
 
@@ -220,7 +220,7 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
         implicit val hc: HeaderCarrier = HeaderCarrier()
         val nino = NinoGenerator.randomNino()
 
-        when(mockIfConnector.getDesignatoryDetails(any())(any())).thenReturn(Future.successful(ifResponse))
+        when(mockIfConnector.getDesignatoryDetails(any(), any())(any())).thenReturn(Future.successful(ifResponse))
         when(mockRepository.set(any(), any())).thenReturn(Future.failed(new RuntimeException("foo")))
         when(mockRepository.get(any())).thenReturn(Future.successful(None))
 
@@ -249,7 +249,7 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
       implicit val hc: HeaderCarrier = HeaderCarrier()
       val nino = NinoGenerator.randomNino()
 
-      when(mockIfConnector.getDesignatoryDetails(any())(any())).thenReturn(Future.failed(new RuntimeException()))
+      when(mockIfConnector.getDesignatoryDetails(any(), any())(any())).thenReturn(Future.failed(new RuntimeException()))
       when(mockRepository.get(any())).thenReturn(Future.successful(None))
 
       service.getDesignatoryDetails(nino).failed.futureValue
