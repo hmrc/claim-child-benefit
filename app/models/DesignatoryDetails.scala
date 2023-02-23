@@ -18,7 +18,10 @@ package models
 
 import play.api.libs.json.{Json, OFormat}
 
+import java.time.LocalDate
+
 final case class DesignatoryDetails(
+                                     dateOfBirth: LocalDate,
                                      realName: Option[Name],
                                      knownAsName: Option[Name],
                                      residentialAddress: Option[Address],

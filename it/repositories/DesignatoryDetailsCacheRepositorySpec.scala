@@ -27,7 +27,7 @@ import org.scalatest.matchers.must.Matchers
 import uk.gov.hmrc.mongo.test.{CleanMongoCollectionSupport, DefaultPlayMongoRepositorySupport, IndexedMongoQueriesSupport}
 import utils.NinoGenerator
 
-import java.time.{Clock, Instant, ZoneId}
+import java.time.{Clock, Instant, LocalDate, ZoneId}
 import java.time.temporal.ChronoUnit
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -58,7 +58,7 @@ class DesignatoryDetailsCacheRepositorySpec
 
     "must save the item, setting the timestap to `now`" in {
 
-      val details = DesignatoryDetails(None, None, None, None)
+      val details = DesignatoryDetails(LocalDate.of(2020, 2, 1), None, None, None, None)
       val nino = NinoGenerator.randomNino()
       val expectedRecord = DesignatoryDetailsCacheItem(nino, details, instant)
 
@@ -78,8 +78,8 @@ class DesignatoryDetailsCacheRepositorySpec
 
         val nino1 = NinoGenerator.randomNino()
         val nino2 = NinoGenerator.randomNino()
-        val details1 = DesignatoryDetails(Some(Name(None, "first 1", None, "last 1")), None, None, None)
-        val details2 = DesignatoryDetails(Some(Name(None, "first 2", None, "last 2")), None, None, None)
+        val details1 = DesignatoryDetails(LocalDate.of(2020, 2, 1), Some(Name(None, "first 1", None, "last 1")), None, None, None)
+        val details2 = DesignatoryDetails(LocalDate.of(2020, 2, 1), Some(Name(None, "first 2", None, "last 2")), None, None, None)
 
         val item1 = DesignatoryDetailsCacheItem(nino1, details1, instant)
         val item2 = DesignatoryDetailsCacheItem(nino2, details2, instant)

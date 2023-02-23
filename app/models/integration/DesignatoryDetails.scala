@@ -22,6 +22,7 @@ import play.api.libs.json._
 import java.time.LocalDate
 
 final case class DesignatoryDetails(
+                                     dateOfBirth: LocalDate,
                                      names: Seq[Name],
                                      addresses: Seq[Address]
                                    )
@@ -30,6 +31,7 @@ object DesignatoryDetails {
 
   implicit lazy val reads: Reads[DesignatoryDetails] = {
     (
+      (__ \ "details" \ "dateOfBirth").read[LocalDate] and
       (__ \ "nameList" \ "name").read[Seq[Name]] and
       (__ \ "addressList" \ "address").read[Seq[Address]]
     )(DesignatoryDetails.apply _)
@@ -37,6 +39,7 @@ object DesignatoryDetails {
 
   implicit lazy val writes: OWrites[DesignatoryDetails] =
     (
+      (__ \ "details" \ "dateOfBirth").write[LocalDate] and
       (__ \ "nameList" \ "name").write[Seq[Name]] and
       (__ \ "addressList" \ "address").write[Seq[Address]]
     )(unlift(DesignatoryDetails.unapply))

@@ -48,11 +48,15 @@ class DesignatoryDetailsSpec extends AnyFreeSpec with Matchers {
   )
 
   private val model = DesignatoryDetails(
+    dateOfBirth = LocalDate.of(2020, 2, 1),
     names = List(name),
     addresses = List(address)
   )
 
   private val json = Json.obj(
+    "details" -> Json.obj(
+      "dateOfBirth" -> "2020-02-01"
+    ),
     "nameList" -> Json.obj(
       "name" -> Json.arr(name)
     ),

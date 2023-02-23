@@ -58,6 +58,7 @@ class DesignatoryDetailsService @Inject() (
               .map(Address(_))
 
             val details = DesignatoryDetails(
+              dateOfBirth = result.dateOfBirth,
               realName = realName,
               knownAsName = knownAs,
               residentialAddress = residentialAddress,

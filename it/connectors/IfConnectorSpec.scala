@@ -73,6 +73,7 @@ class IfConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with I
     )
 
     val expectedResult = DesignatoryDetails(
+      dateOfBirth = LocalDate.of(2020, 2, 1),
       names = List(name),
       addresses = List(address)
     )
