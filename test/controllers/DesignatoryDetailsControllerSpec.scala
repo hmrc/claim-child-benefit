@@ -34,6 +34,7 @@ import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.auth.core.retrieve.~
 import utils.NinoGenerator
 
+import java.time.LocalDate
 import scala.concurrent.Future
 
 class DesignatoryDetailsControllerSpec
@@ -101,6 +102,7 @@ class DesignatoryDetailsControllerSpec
         )
 
         models.DesignatoryDetails(
+          dateOfBirth = LocalDate.of(2020, 2, 1),
           realName = Some(name),
           knownAsName = None,
           residentialAddress = Some(residentialAddress),

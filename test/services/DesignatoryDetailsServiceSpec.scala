@@ -133,6 +133,7 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
     )
 
     models.integration.DesignatoryDetails(
+      dateOfBirth = LocalDate.of(2020, 2, 1),
       names = List(
         realName1,
         knownAs1,
@@ -189,6 +190,7 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
     )
 
     models.DesignatoryDetails(
+      dateOfBirth = LocalDate.of(2020, 2, 1),
       realName = Some(realName),
       knownAsName = Some(knownAsName),
       residentialAddress = Some(residentialAddress),
@@ -234,7 +236,7 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
         implicit val hc: HeaderCarrier = HeaderCarrier()
         val nino = NinoGenerator.randomNino()
 
-        val details = DesignatoryDetails(None, None, None, None)
+        val details = DesignatoryDetails(LocalDate.now, None, None, None, None)
 
         when(mockRepository.get(any())).thenReturn(Future.successful(Some(details)))
 
