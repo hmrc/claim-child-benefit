@@ -17,7 +17,6 @@
 package controllers
 
 import better.files.{Resource => _, _}
-import models.Done
 import models.dmsa.{Metadata, SubmissionResponse}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchersSugar.eqTo
@@ -40,6 +39,10 @@ import uk.gov.hmrc.internalauth.client.test.{BackendAuthComponentsStub, StubBeha
 import utils.NinoGenerator
 
 import java.io.{File => JFile}
+import java.time.{Instant, LocalDateTime, ZoneOffset}
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+import java.util.UUID
 import scala.concurrent.ExecutionContext.global
 import scala.concurrent.Future
 
@@ -94,6 +97,9 @@ class SupplementaryDataControllerSpec extends AnyFreeSpec with Matchers with Sca
           .thenReturn(Future.successful("requestId"))
 
         val nino = NinoGenerator.randomNino()
+        val submissionDate = Instant.now().truncatedTo(ChronoUnit.SECONDS)
+        val submissionDateString = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.ofInstant(submissionDate, ZoneOffset.UTC))
+        val correlationId = UUID.randomUUID().toString
 
         val tempFile = SingletonTemporaryFileCreator.create()
         val betterTempFile = File(tempFile.toPath)
@@ -106,6 +112,8 @@ class SupplementaryDataControllerSpec extends AnyFreeSpec with Matchers with Sca
             MultipartFormData(
               dataParts = Map(
                 "metadata.nino" -> Seq(nino),
+                "metadata.submissionDate" -> Seq(submissionDateString),
+                "metadata.correlationId" -> Seq(correlationId)
               ),
               files = Seq(
                 MultipartFormData.FilePart(
@@ -120,10 +128,11 @@ class SupplementaryDataControllerSpec extends AnyFreeSpec with Matchers with Sca
             )
           )
 
-        val expectedMetadata = Metadata(nino = nino)
+        val expectedMetadata = Metadata(nino, submissionDate, correlationId)
 
         val result = route(app, request).value
 
+        println(Json.prettyPrint(contentAsJson(result)))
         status(result) mustEqual ACCEPTED
         contentAsJson(result) mustEqual Json.obj("id" -> "requestId")
 
@@ -146,13 +155,18 @@ class SupplementaryDataControllerSpec extends AnyFreeSpec with Matchers with Sca
           .writeByteArray(pdfBytes)
 
         val nino = NinoGenerator.randomNino()
+        val submissionDate = Instant.now().truncatedTo(ChronoUnit.SECONDS)
+        val submissionDateString = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.ofInstant(submissionDate, ZoneOffset.UTC))
+        val correlationId = UUID.randomUUID().toString
 
         val request = FakeRequest(routes.SupplementaryDataController.submit)
           .withHeaders(AUTHORIZATION -> "my-token")
           .withMultipartFormDataBody(
             MultipartFormData(
               dataParts = Map(
-                "metadata.nino" -> Seq(nino)
+                "metadata.nino" -> Seq(nino),
+                "metadata.submissionDate" -> Seq(submissionDateString),
+                "metadata.correlationId" -> Seq(correlationId)
               ),
               files = Seq(
                 MultipartFormData.FilePart(
@@ -191,6 +205,8 @@ class SupplementaryDataControllerSpec extends AnyFreeSpec with Matchers with Sca
         val responseBody = contentAsJson(result).as[SubmissionResponse.Failure]
         responseBody.errors must contain only (
           "metadata.nino: This field is required",
+          "metadata.submissionDate: This field is required",
+          "metadata.correlationId: This field is required",
           "file: This field is required"
         )
 

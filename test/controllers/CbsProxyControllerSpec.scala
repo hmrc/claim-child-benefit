@@ -164,7 +164,6 @@ class CbsProxyControllerSpec
 
       val requestBody = Json.obj("foo" -> "bar")
       val responseBody = Json.obj("bar" -> "foo")
-      val httpResponse = HttpResponse(CREATED, responseBody, Map.empty)
       val correlationId = "correlationId"
 
       when(mockStubBehaviour.stubAuth(Some(permission), Retrieval.EmptyRetrieval))

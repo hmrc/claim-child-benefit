@@ -80,7 +80,7 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
         lastModified = clock.instant().minus(2, ChronoUnit.DAYS)
       ),
       failureReason = None,
-      metadata = Metadata(nino),
+      metadata = Metadata(nino, clock.instant(), "sdesCorrelationId"),
       created = clock.instant(),
       lastUpdated = clock.instant(),
       sdesCorrelationId = "sdesCorrelationId"

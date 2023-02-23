@@ -60,7 +60,7 @@ class AllowlistControllerSpec
         bind[AllowlistRepository].toInstance(mockRepo),
         bind[AuthConnector].toInstance(mockAuthConnector)
       )
-      .build
+      .build()
 
   ".get" - {
 

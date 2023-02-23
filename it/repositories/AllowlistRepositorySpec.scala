@@ -78,7 +78,7 @@ class AllowlistRepositorySpec
       repository.set(entry1).futureValue mustEqual Done
       findAll().futureValue.head mustEqual entry1
 
-      val rawBson = mongoComponent.database.getCollection[BsonDocument]("allowlist").find().head.futureValue
+      val rawBson = mongoComponent.database.getCollection[BsonDocument]("allowlist").find().head().futureValue
       val path = __ \ "_id"
       val parsed = path(Json.parse(rawBson.toJson))
 

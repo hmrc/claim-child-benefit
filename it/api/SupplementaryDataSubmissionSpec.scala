@@ -45,8 +45,9 @@ import utils.NinoGenerator
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
-import java.time.LocalDateTime
+import java.time.{Instant, LocalDateTime, ZoneOffset}
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class SupplementaryDataSubmissionSpec extends AnyFreeSpec with Matchers with ScalaFutures with IntegrationPatience with BeforeAndAfterEach with GuiceOneServerPerSuite with OptionValues {
@@ -89,6 +90,9 @@ class SupplementaryDataSubmissionSpec extends AnyFreeSpec with Matchers with Sca
   "Successful submissions must return ACCEPTED and receive callbacks confirming files have been processed" in {
 
     val nino = NinoGenerator.randomNino()
+    val submissionDate = Instant.now().truncatedTo(ChronoUnit.SECONDS)
+    val submissionDateString = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.ofInstant(submissionDate, ZoneOffset.UTC))
+    val correlationId = UUID.randomUUID().toString
     val requestId = UUID.randomUUID().toString
 
     val response = httpClient.url(s"http://localhost:$port/claim-child-benefit/supplementary-data")
@@ -99,6 +103,8 @@ class SupplementaryDataSubmissionSpec extends AnyFreeSpec with Matchers with Sca
       .post(
         Source(Seq(
           DataPart("metadata.nino", nino),
+          DataPart("metadata.submissionDate", submissionDateString),
+          DataPart("metadata.correlationId", correlationId),
           FilePart(
             key = "file",
             filename = "form.pdf",
