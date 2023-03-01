@@ -62,4 +62,9 @@ class AllowlistController @Inject()(
           .map(_ => Ok)
       }.getOrElse(Future.successful(BadRequest))
   }
+
+  def delete: Action[AnyContent] = authorised.async {
+    implicit request => ???
+
+  }
 }

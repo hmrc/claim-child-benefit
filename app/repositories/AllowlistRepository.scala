@@ -53,4 +53,8 @@ class AllowlistRepository @Inject()(
           .map(_ => Done)
     }
   }
+
+  def delete(entry: AllowlistEntry): Future[Done] = {
+    ???
+  }
 }

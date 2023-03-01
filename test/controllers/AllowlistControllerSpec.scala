@@ -175,4 +175,56 @@ class AllowlistControllerSpec
       route(app, request).value.failed.futureValue
     }
   }
+
+  ".delete" - {
+
+    "must delete the supplied NINO" in {
+
+      when(mockStubBehaviour.stubAuth[Unit](any(), any()))
+        .thenReturn(Future.unit)
+
+      when(mockRepo.delete(any())).thenReturn(Future.successful(Done))
+
+      val nino = NinoGenerator.randomNino()
+
+      val request = FakeRequest(DELETE, routes.AllowlistController.delete.url)
+        .withHeaders(AUTHORIZATION -> "my-token")
+        .withTextBody(nino)
+
+      val result = route(app, request).value
+      status(result) mustEqual OK
+
+      verify(mockStubBehaviour, times(1)).stubAuth(Some(permission), Retrieval.EmptyRetrieval)
+      verify(mockRepo, times(1)).delete(eqTo(AllowlistEntry(SensitiveString(nino))))
+
+    }
+
+    "must return BadRequest when there is no body" in {
+
+      when(mockStubBehaviour.stubAuth[Unit](any(), any()))
+        .thenReturn(Future.unit)
+
+      val request = FakeRequest(DELETE, routes.AllowlistController.delete.url)
+        .withHeaders(AUTHORIZATION -> "my-token")
+
+      val result = route(app, request).value
+      status(result) mustEqual BAD_REQUEST
+    }
+
+    "must fail when the user is not authorised" in {
+      when(mockStubBehaviour.stubAuth[Unit](any(), any()))
+        .thenReturn(Future.failed(new RuntimeException()))
+
+      val nino = NinoGenerator.randomNino()
+
+      when(mockRepo.delete(any())).thenReturn(Future.successful(Done))
+
+      val request = FakeRequest(DELETE, routes.AllowlistController.delete.url)
+        .withHeaders(AUTHORIZATION -> "my-token")
+        .withTextBody(nino)
+
+      route(app, request).value.failed.futureValue
+    }
+
+    }
 }
