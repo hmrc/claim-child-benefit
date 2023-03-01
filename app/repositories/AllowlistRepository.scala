@@ -17,6 +17,8 @@
 package repositories
 
 import models.{AllowlistEntry, Done}
+import org.mongodb.scala.model.Filters
+import org.mongodb.scala.result.{DeleteResult, InsertManyResult}
 import uk.gov.hmrc.crypto.{Decrypter, Encrypter}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
@@ -52,5 +54,31 @@ class AllowlistRepository @Inject()(
           .toFuture()
           .map(_ => Done)
     }
+  }
+
+  def delete(entry: AllowlistEntry): Future[Done] = {
+
+    def entries: Future[Seq[AllowlistEntry]] =
+    collection
+      .find()
+      .toFuture()
+
+    def deleteEntries: Future[DeleteResult] =
+      collection
+      .deleteMany(Filters.empty())
+        .toFuture()
+
+    def insertEntries(i: Seq[AllowlistEntry]): Future[InsertManyResult] =
+      collection
+      .insertMany(i)
+        .toFuture()
+
+    for {
+      i <- entries
+      _ <- deleteEntries
+      remainingEntries = i.filterNot(_ == entry)
+      _ <- if (remainingEntries.nonEmpty) insertEntries(remainingEntries) else Future.unit
+    } yield Done
+
   }
 }

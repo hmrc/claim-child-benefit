@@ -62,4 +62,13 @@ class AllowlistController @Inject()(
           .map(_ => Ok)
       }.getOrElse(Future.successful(BadRequest))
   }
+
+  def delete: Action[AnyContent] = authorised.async {
+    implicit request =>
+      request.body.asText.map { nino =>
+        repository
+          .delete(AllowlistEntry(SensitiveString(nino)))
+          .map(_ => Ok)
+      }.getOrElse(Future.successful(BadRequest))
+  }
 }
