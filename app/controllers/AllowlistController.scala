@@ -21,6 +21,7 @@ import models.AllowlistEntry
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import repositories.AllowlistRepository
 import uk.gov.hmrc.crypto.Sensitive.SensitiveString
+import uk.gov.hmrc.internalauth.client.{BackendAuthComponents, IAAction, Predicate, Resource, ResourceLocation, ResourceType}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.Inject
@@ -28,9 +29,20 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class AllowlistController @Inject()(
                                      cc: ControllerComponents,
+                                     auth: BackendAuthComponents,
                                      identify: IdentifierAction,
                                      repository: AllowlistRepository
                                    )(implicit ec: ExecutionContext) extends BackendController(cc) {
+
+  private val permission = Predicate.Permission(
+    resource = Resource(
+      resourceType = ResourceType("claim-child-benefit-admin"),
+      resourceLocation = ResourceLocation("allow-list")
+    ),
+    action = IAAction("ADMIN")
+  )
+
+  private val authorised = auth.authorizedAction(permission)
 
   def get: Action[AnyContent] = identify.async {
     implicit request =>
@@ -42,9 +54,7 @@ class AllowlistController @Inject()(
       }.getOrElse(Future.successful(NotFound))
   }
 
-  // TODO: Add internal auth
-  // TODO: Do we need to validate the NINO format?
-  def set: Action[AnyContent] = Action.async {
+  def set: Action[AnyContent] = authorised.async {
     implicit request =>
       request.body.asText.map { nino =>
         repository

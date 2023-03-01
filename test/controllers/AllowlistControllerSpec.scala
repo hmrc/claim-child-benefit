@@ -26,15 +26,18 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.test.FakeRequest
+import play.api.test.{FakeRequest, Helpers}
 import play.api.test.Helpers._
 import repositories.AllowlistRepository
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.auth.core.{AuthConnector, MissingBearerToken}
 import uk.gov.hmrc.crypto.Sensitive.SensitiveString
 import uk.gov.hmrc.http.HeaderNames
+import uk.gov.hmrc.internalauth.client.{BackendAuthComponents, IAAction, Predicate, Resource, ResourceLocation, ResourceType, Retrieval}
+import uk.gov.hmrc.internalauth.client.test.{BackendAuthComponentsStub, StubBehaviour}
 import utils.NinoGenerator
 
+import scala.concurrent.ExecutionContext.global
 import scala.concurrent.Future
 
 class AllowlistControllerSpec
@@ -48,9 +51,21 @@ class AllowlistControllerSpec
   private val mockRepo = mock[AllowlistRepository]
   private val mockAuthConnector = mock[AuthConnector]
 
+  private val mockStubBehaviour = mock[StubBehaviour]
+  private val backendAuthComponents: BackendAuthComponents =
+    BackendAuthComponentsStub(mockStubBehaviour)(Helpers.stubControllerComponents(), global)
+  private val permission = Predicate.Permission(
+    resource = Resource(
+      resourceType = ResourceType("claim-child-benefit-admin"),
+      resourceLocation = ResourceLocation("allow-list")
+    ),
+    action = IAAction("ADMIN")
+  )
+
   override def beforeEach(): Unit = {
     reset(mockRepo)
     reset(mockAuthConnector)
+    reset(mockStubBehaviour)
     super.beforeEach()
   }
 
@@ -58,7 +73,8 @@ class AllowlistControllerSpec
     new GuiceApplicationBuilder()
       .overrides(
         bind[AllowlistRepository].toInstance(mockRepo),
-        bind[AuthConnector].toInstance(mockAuthConnector)
+        bind[AuthConnector].toInstance(mockAuthConnector),
+        bind[BackendAuthComponents].toInstance(backendAuthComponents)
       )
       .build()
 
@@ -113,23 +129,50 @@ class AllowlistControllerSpec
 
     "must store the supplied NINO" in {
 
+      when(mockStubBehaviour.stubAuth[Unit](any(), any()))
+        .thenReturn(Future.unit)
+
       val nino = NinoGenerator.randomNino()
 
       when(mockRepo.set(any())).thenReturn(Future.successful(Done))
 
-      val request = FakeRequest(PUT, routes.AllowlistController.set.url).withTextBody(nino)
+      val request = FakeRequest(PUT, routes.AllowlistController.set.url)
+        .withHeaders(AUTHORIZATION -> "my-token")
+        .withTextBody(nino)
 
       val result  = route(app, request).value
       status(result) mustEqual OK
+
+      verify(mockStubBehaviour, times(1)).stubAuth(Some(permission), Retrieval.EmptyRetrieval)
       verify(mockRepo, times(1)).set(eqTo(AllowlistEntry(SensitiveString(nino))))
     }
 
     "must return BadRequest when there is no body" in {
 
+      when(mockStubBehaviour.stubAuth[Unit](any(), any()))
+        .thenReturn(Future.unit)
+
       val request = FakeRequest(PUT, routes.AllowlistController.set.url)
+        .withHeaders(AUTHORIZATION -> "my-token")
 
       val result = route(app, request).value
       status(result) mustEqual BAD_REQUEST
+    }
+
+    "must fail when the user is not authorised" in {
+
+      when(mockStubBehaviour.stubAuth[Unit](any(), any()))
+        .thenReturn(Future.failed(new RuntimeException()))
+
+      val nino = NinoGenerator.randomNino()
+
+      when(mockRepo.set(any())).thenReturn(Future.successful(Done))
+
+      val request = FakeRequest(PUT, routes.AllowlistController.set.url)
+        .withHeaders(AUTHORIZATION -> "my-token")
+        .withTextBody(nino)
+
+      route(app, request).value.failed.futureValue
     }
   }
 }
