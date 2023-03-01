@@ -115,7 +115,7 @@ class AllowlistRepositorySpec
 
     }
 
-    "must successfully remove last allow list element" in {
+    "must return empty allow list if all entries are removed" in {
 
       repository.set(entry1).futureValue
       repository.delete(entry1).futureValue
