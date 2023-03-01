@@ -96,4 +96,22 @@ class AllowlistRepositorySpec
       findAll().futureValue.size mustEqual 1
     }
   }
+
+  ".delete" - {
+
+    "must remove allow list entry when it exists within the database" in {
+
+      repository.set(entry1).futureValue
+      repository.delete(entry1).futureValue
+
+      findAll().futureValue mustBe empty
+
+    }
+
+    "must not fail when the allow list entry doesn't exist within the database" in {
+
+      repository.delete(entry1).futureValue
+
+    }
+  }
 }
