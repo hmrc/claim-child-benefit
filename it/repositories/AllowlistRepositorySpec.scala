@@ -102,15 +102,25 @@ class AllowlistRepositorySpec
     "must remove allow list entry when it exists within the database" in {
 
       repository.set(entry1).futureValue
+      repository.set(entry2).futureValue
       repository.delete(entry1).futureValue
 
-      findAll().futureValue mustBe empty
+      findAll().futureValue must contain only entry2
 
     }
 
     "must not fail when the allow list entry doesn't exist within the database" in {
 
       repository.delete(entry1).futureValue
+
+    }
+
+    "must successfully remove last allow list element" in {
+
+      repository.set(entry1).futureValue
+      repository.delete(entry1).futureValue
+
+      findAll().futureValue mustBe empty
 
     }
   }

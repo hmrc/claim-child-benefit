@@ -58,22 +58,27 @@ class AllowlistRepository @Inject()(
 
   def delete(entry: AllowlistEntry): Future[Done] = {
 
-    val entries: Future[Seq[AllowlistEntry]] =
+    def entries: Future[Seq[AllowlistEntry]] =
     collection
       .find()
       .toFuture()
 
-    val deleteEntries: Future[DeleteResult] =
+    def deleteEntries: Future[DeleteResult] =
       collection
       .deleteMany(Filters.empty())
         .toFuture()
 
-    val insertEntries: Future[InsertManyResult] =
+    def insertEntries(i: Seq[AllowlistEntry]): Future[InsertManyResult] =
       collection
-      .insertMany(???)
+      .insertMany(i)
         .toFuture()
 
-    ???
+    for {
+      i <- entries
+      _ <- deleteEntries
+      remainingEntries = i.filterNot(_ == entry)
+      _ <- if (remainingEntries.nonEmpty) insertEntries(remainingEntries) else Future.unit
+    } yield Done
 
-    }
+  }
 }
