@@ -34,19 +34,20 @@ import utils.NinoGenerator
 import java.time.LocalDate
 import java.util.UUID
 
-class IfConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with IntegrationPatience with WireMockHelper {
+class DesIndividualDetailsConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with IntegrationPatience with WireMockHelper {
 
   private lazy val app: Application =
     GuiceApplicationBuilder()
       .configure(
-        "microservice.services.integration-framework.port" -> server.port(),
-        "microservice.services.integration-framework.auth" -> "api-key",
-        "microservice.services.integration-framework.originator-id" -> "originator-id",
-        "microservice.services.integration-framework.environment" -> "env"
+        "microservice.services.des.port" -> server.port(),
+        "microservice.services.des.auth" -> "api-key",
+        "microservice.services.des.originator-id" -> "originator-id",
+        "microservice.services.des.environment" -> "env",
+        "microservice.services.des.resolve-merge" -> "Y"
       )
       .build()
 
-  private lazy val connector = app.injector.instanceOf[IfConnector]
+  private lazy val connector = app.injector.instanceOf[DesIndividualDetailsConnector]
 
   "getDesignatoryDetails" - {
 
@@ -84,7 +85,7 @@ class IfConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with I
     "must return designatory details when they exist" in {
 
       val nino = NinoGenerator.randomNino()
-      val url = s"/individuals/details/NINO/$nino"
+      val url = s"/individuals/details/$nino/Y"
       val correlationId = UUID.randomUUID().toString
 
         server.stubFor(
@@ -106,7 +107,7 @@ class IfConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with I
     "must return a failed future when the server responds with anything else" in {
 
       val nino = NinoGenerator.randomNino()
-      val url = s"/individuals/details/NINO/$nino"
+      val url = s"/individuals/details/$nino/Y"
 
       server.stubFor(
         get(urlPathEqualTo(url))
@@ -123,7 +124,7 @@ class IfConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with I
     "must return a failed future when there is a connection error" in {
 
       val nino = NinoGenerator.randomNino()
-      val url = s"/individuals/details/NINO/$nino"
+      val url = s"/individuals/details/$nino/Y"
 
       server.stubFor(
         get(urlPathEqualTo(url))

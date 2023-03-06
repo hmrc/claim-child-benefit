@@ -16,7 +16,7 @@
 
 package services
 
-import connectors.IfConnector
+import connectors.{IfIndividualDetailsConnector, IndividualDetailsConnector}
 import models.{Country, DesignatoryDetails, Done}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchersSugar.eqTo
@@ -24,8 +24,8 @@ import org.mockito.MockitoSugar
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.inject.bind
+import play.api.inject.guice.GuiceApplicationBuilder
 import repositories.DesignatoryDetailsCacheRepository
 import uk.gov.hmrc.http.HeaderCarrier
 import utils.NinoGenerator
@@ -35,19 +35,19 @@ import scala.concurrent.Future
 
 class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFutures {
 
-  private val mockIfConnector = mock[IfConnector]
+  private val mockIndividualDetailsConnector = mock[IndividualDetailsConnector]
   private val mockRepository = mock[DesignatoryDetailsCacheRepository]
 
   private val app = GuiceApplicationBuilder()
     .overrides(
-      bind[IfConnector].toInstance(mockIfConnector),
+      bind[IndividualDetailsConnector].toInstance(mockIndividualDetailsConnector),
       bind[DesignatoryDetailsCacheRepository].toInstance(mockRepository)
     )
     .build()
 
   private val service = app.injector.instanceOf[DesignatoryDetailsService]
 
-  val ifResponse = {
+  private val individualDetailsResponse = {
 
     val realName1 = models.integration.Name(
       nameSequenceNumber = 1,
@@ -207,7 +207,7 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
         implicit val hc: HeaderCarrier = HeaderCarrier()
         val nino = NinoGenerator.randomNino()
 
-        when(mockIfConnector.getDesignatoryDetails(any(), any())(any())).thenReturn(Future.successful(ifResponse))
+        when(mockIndividualDetailsConnector.getDesignatoryDetails(any(), any())(any())).thenReturn(Future.successful(individualDetailsResponse))
         when(mockRepository.set(any(), any())).thenReturn(Future.successful(Done))
         when(mockRepository.get(any())).thenReturn(Future.successful(None))
 
@@ -220,7 +220,7 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
         implicit val hc: HeaderCarrier = HeaderCarrier()
         val nino = NinoGenerator.randomNino()
 
-        when(mockIfConnector.getDesignatoryDetails(any(), any())(any())).thenReturn(Future.successful(ifResponse))
+        when(mockIndividualDetailsConnector.getDesignatoryDetails(any(), any())(any())).thenReturn(Future.successful(individualDetailsResponse))
         when(mockRepository.set(any(), any())).thenReturn(Future.failed(new RuntimeException("foo")))
         when(mockRepository.get(any())).thenReturn(Future.successful(None))
 
@@ -249,7 +249,7 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
       implicit val hc: HeaderCarrier = HeaderCarrier()
       val nino = NinoGenerator.randomNino()
 
-      when(mockIfConnector.getDesignatoryDetails(any(), any())(any())).thenReturn(Future.failed(new RuntimeException()))
+      when(mockIndividualDetailsConnector.getDesignatoryDetails(any(), any())(any())).thenReturn(Future.failed(new RuntimeException()))
       when(mockRepository.get(any())).thenReturn(Future.successful(None))
 
       service.getDesignatoryDetails(nino).failed.futureValue
