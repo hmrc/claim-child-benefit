@@ -16,7 +16,7 @@
 
 package services
 
-import connectors.IfConnector
+import connectors.IndividualDetailsConnector
 import logging.Logging
 import models.{Address, DesignatoryDetails, Name}
 import repositories.DesignatoryDetailsCacheRepository
@@ -27,7 +27,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class DesignatoryDetailsService @Inject() (
-                                            connector: IfConnector,
+                                            connector: IndividualDetailsConnector,
                                             cache: DesignatoryDetailsCacheRepository
                                           )(implicit ec: ExecutionContext) extends Logging {
 

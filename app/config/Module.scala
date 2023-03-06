@@ -17,6 +17,7 @@
 package config
 
 import cats.effect.unsafe.IORuntime
+import connectors.{DesIndividualDetailsConnector, IfIndividualDetailsConnector, IndividualDetailsConnector}
 import play.api.inject.Binding
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.crypto.{Decrypter, Encrypter}
@@ -33,12 +34,18 @@ class Module extends play.api.inject.Module {
         Seq(bind[InternalAuthTokenInitialiser].to[InternalAuthTokenInitialiserImpl].eagerly())
       } else Seq(bind[InternalAuthTokenInitialiser].to[NoOpInternalAuthTokenInitialiser].eagerly())
 
+    val individualDetailsConnectorBindings: Binding[_] =
+      if (configuration.get[Boolean]("features.use-if-individual-details")) {
+        bind[IndividualDetailsConnector].to[IfIndividualDetailsConnector].eagerly()
+      } else bind[IndividualDetailsConnector].to[DesIndividualDetailsConnector].eagerly()
+
     Seq(
       bind[AppConfig].toSelf.eagerly(),
       bind[Clock].toInstance(Clock.systemUTC()),
       bind[IORuntime].toProvider[IORuntimeProvider],
       bind[SdesNotificationWorker].toSelf.eagerly(),
-      bind[Encrypter with Decrypter].toProvider[CryptoProvider]
+      bind[Encrypter with Decrypter].toProvider[CryptoProvider],
+      individualDetailsConnectorBindings
     ) ++ authTokenInitialiserBindings
   }
 }
