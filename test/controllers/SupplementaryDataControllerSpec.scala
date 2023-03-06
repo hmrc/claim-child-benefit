@@ -132,7 +132,6 @@ class SupplementaryDataControllerSpec extends AnyFreeSpec with Matchers with Sca
 
         val result = route(app, request).value
 
-        println(Json.prettyPrint(contentAsJson(result)))
         status(result) mustEqual ACCEPTED
         contentAsJson(result) mustEqual Json.obj("id" -> "requestId")
 
