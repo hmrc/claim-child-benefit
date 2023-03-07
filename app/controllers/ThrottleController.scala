@@ -37,4 +37,11 @@ class ThrottleController @Inject()(
         .map(data => CheckLimitResponse(data.limitReached))
         .map(r => Ok(Json.toJson(r)))
   }
+
+  def incrementCount: Action[AnyContent] = Action.async {
+    implicit request =>
+      repository
+        .incrementCount
+        .map(_ => Ok)
+  }
 }

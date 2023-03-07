@@ -16,7 +16,7 @@
 
 package controllers
 
-import models.{CheckLimitResponse, ThrottleData}
+import models.{CheckLimitResponse, Done, ThrottleData}
 import org.mockito.{Mockito, MockitoSugar}
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.ScalaFutures
@@ -63,6 +63,20 @@ class ThrottleControllerSpec
 
       status(result) mustEqual OK
       contentAsJson(result) mustEqual Json.toJson(CheckLimitResponse(throttleData.limitReached))
+    }
+  }
+
+  ".incrementCount" - {
+
+    "must increment the count and return OK" in {
+
+      when(mockThrottleRepository.incrementCount).thenReturn(Future.successful(Done))
+
+      val request = FakeRequest(routes.ThrottleController.incrementCount)
+      val result = route(app, request).value
+
+      status(result) mustEqual OK
+      verify(mockThrottleRepository, times(1)).incrementCount
     }
   }
 }
