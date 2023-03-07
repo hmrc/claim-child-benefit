@@ -29,20 +29,43 @@ final case class DesignatoryDetails(
 
 object DesignatoryDetails {
 
-  implicit lazy val reads: Reads[DesignatoryDetails] = {
-    (
-      (__ \ "details" \ "dateOfBirth").read[LocalDate] and
-      (__ \ "nameList" \ "name").read[Seq[Name]] and
-      (__ \ "addressList" \ "address").read[Seq[Address]]
-    )(DesignatoryDetails.apply _)
+  implicit lazy val formats: OFormat[DesignatoryDetails] = {
+
+    lazy val reads: Reads[DesignatoryDetails] =
+      (
+        (__ \ "details" \ "dateOfBirth").read[LocalDate] and
+        (__ \ "nameList" \ "name").read[Seq[Name]] and
+        (__ \ "addressList" \ "address").read[Seq[Address]]
+      )(DesignatoryDetails.apply _)
+
+    lazy val writes: OWrites[DesignatoryDetails] =
+      (
+        (__ \ "details" \ "dateOfBirth").write[LocalDate] and
+        (__ \ "nameList" \ "name").write[Seq[Name]] and
+        (__ \ "addressList" \ "address").write[Seq[Address]]
+      )(unlift(DesignatoryDetails.unapply))
+
+    OFormat(reads, writes)
   }
 
-  implicit lazy val writes: OWrites[DesignatoryDetails] =
-    (
-      (__ \ "details" \ "dateOfBirth").write[LocalDate] and
-      (__ \ "nameList" \ "name").write[Seq[Name]] and
-      (__ \ "addressList" \ "address").write[Seq[Address]]
-    )(unlift(DesignatoryDetails.unapply))
+  lazy val desFormats: OFormat[DesignatoryDetails] = {
+
+    lazy val reads: Reads[DesignatoryDetails] =
+      (
+        (__ \ "dateOfBirth").read[LocalDate] and
+        (__ \ "nameList" \ "name").read[Seq[Name]] and
+        (__ \ "addressList" \ "address").read[Seq[Address]]
+      )(DesignatoryDetails.apply _)
+
+    lazy val writes: OWrites[DesignatoryDetails] =
+      (
+        (__ \ "dateOfBirth").write[LocalDate] and
+        (__ \ "nameList" \ "name").write[Seq[Name]] and
+        (__ \ "addressList" \ "address").write[Seq[Address]]
+      )(unlift(DesignatoryDetails.unapply))
+
+    OFormat(reads, writes)
+  }
 }
 
 final case class Name(

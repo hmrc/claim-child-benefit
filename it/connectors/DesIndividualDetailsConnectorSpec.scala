@@ -97,7 +97,7 @@ class DesIndividualDetailsConnectorSpec extends AnyFreeSpec with Matchers with S
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(expectedResult)))
+              .withBody(Json.stringify(Json.toJson(expectedResult)(DesignatoryDetails.desFormats)))
           )
       )
 
