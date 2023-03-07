@@ -20,6 +20,7 @@ import config.Service
 import models.integration.DesignatoryDetails
 import play.api.Configuration
 import play.api.http.HeaderNames
+import play.api.libs.json.OFormat
 import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
 import uk.gov.hmrc.http.client.HttpClientV2
 
@@ -63,6 +64,8 @@ class DesIndividualDetailsConnector @Inject()(
   private val originatorId: String = configuration.get[String]("microservice.services.des.originator-id")
   private val environment: String = configuration.get[String]("microservice.services.des.environment")
   private val resolveMerge: String = configuration.get[String]("microservice.services.des.resolve-merge")
+
+  private implicit lazy val format: OFormat[DesignatoryDetails] = DesignatoryDetails.desFormats
 
   override def getDesignatoryDetails(nino: String, correlationId: String = UUID.randomUUID().toString)(implicit hc: HeaderCarrier): Future[DesignatoryDetails] =
     httpClient.get(url"${service.baseUrl}/individuals/details/$nino/$resolveMerge")

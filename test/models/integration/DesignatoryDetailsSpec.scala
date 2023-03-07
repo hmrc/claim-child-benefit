@@ -53,23 +53,47 @@ class DesignatoryDetailsSpec extends AnyFreeSpec with Matchers {
     addresses = List(address)
   )
 
-  private val json = Json.obj(
-    "details" -> Json.obj(
-      "dateOfBirth" -> "2020-02-01"
-    ),
-    "nameList" -> Json.obj(
-      "name" -> Json.arr(name)
-    ),
-    "addressList" -> Json.obj(
-      "address" -> Json.arr(address)
-    )
-  )
+  "IF" - {
 
-  "must read from json" in {
-    json.as[DesignatoryDetails] mustEqual model
+    val json = Json.obj(
+      "details" -> Json.obj(
+        "dateOfBirth" -> "2020-02-01"
+      ),
+      "nameList" -> Json.obj(
+        "name" -> Json.arr(name)
+      ),
+      "addressList" -> Json.obj(
+        "address" -> Json.arr(address)
+      )
+    )
+
+    "must read from json" in {
+      json.as[DesignatoryDetails] mustEqual model
+    }
+
+    "must write to json" in {
+      Json.toJson(model) mustEqual json
+    }
   }
 
-  "must write to json" in {
-    Json.toJson(model) mustEqual json
+  "DES" - {
+
+    val json = Json.obj(
+      "dateOfBirth" -> "2020-02-01",
+      "nameList" -> Json.obj(
+        "name" -> Json.arr(name)
+      ),
+      "addressList" -> Json.obj(
+        "address" -> Json.arr(address)
+      )
+    )
+
+    "must read from json" in {
+      json.as[DesignatoryDetails](DesignatoryDetails.desFormats) mustEqual model
+    }
+
+    "must write to json" in {
+      Json.toJson(model)(DesignatoryDetails.desFormats) mustEqual json
+    }
   }
 }
