@@ -90,7 +90,7 @@ class DesIndividualDetailsConnectorSpec extends AnyFreeSpec with Matchers with S
 
         server.stubFor(
         get(urlPathEqualTo(url))
-          .withHeader(HeaderNames.AUTHORIZATION, equalTo("api-key"))
+          .withHeader(HeaderNames.AUTHORIZATION, equalTo("Bearer api-key"))
           .withHeader("CorrelationId", equalTo(correlationId))
           .withHeader("OriginatorId", equalTo("originator-id"))
           .withHeader("Environment", equalTo("env"))
@@ -111,7 +111,7 @@ class DesIndividualDetailsConnectorSpec extends AnyFreeSpec with Matchers with S
 
       server.stubFor(
         get(urlPathEqualTo(url))
-          .withHeader(HeaderNames.AUTHORIZATION, equalTo("api-key"))
+          .withHeader(HeaderNames.AUTHORIZATION, equalTo("Bearer api-key"))
           .willReturn(
             aResponse()
               .withStatus(INTERNAL_SERVER_ERROR)
@@ -128,7 +128,7 @@ class DesIndividualDetailsConnectorSpec extends AnyFreeSpec with Matchers with S
 
       server.stubFor(
         get(urlPathEqualTo(url))
-          .withHeader(HeaderNames.AUTHORIZATION, equalTo("api-key"))
+          .withHeader(HeaderNames.AUTHORIZATION, equalTo("Bearer api-key"))
           .willReturn(
             aResponse()
               .withFault(Fault.RANDOM_DATA_THEN_CLOSE)

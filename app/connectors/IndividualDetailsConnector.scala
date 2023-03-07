@@ -66,7 +66,7 @@ class DesIndividualDetailsConnector @Inject()(
 
   override def getDesignatoryDetails(nino: String, correlationId: String = UUID.randomUUID().toString)(implicit hc: HeaderCarrier): Future[DesignatoryDetails] =
     httpClient.get(url"${service.baseUrl}/individuals/details/$nino/$resolveMerge")
-      .setHeader(HeaderNames.AUTHORIZATION -> apiKey)
+      .setHeader(HeaderNames.AUTHORIZATION -> s"Bearer $apiKey")
       .setHeader("OriginatorId" -> originatorId)
       .setHeader("Environment" -> environment)
       .setHeader("CorrelationId" -> correlationId)
