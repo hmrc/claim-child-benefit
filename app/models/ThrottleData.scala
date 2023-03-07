@@ -19,7 +19,11 @@ package models
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
-final case class ThrottleData(count: Int, limit: Int)
+final case class ThrottleData(count: Int, limit: Int)  {
+
+  lazy val limitReached: Boolean =
+    count >= limit
+}
 
 object ThrottleData {
 
