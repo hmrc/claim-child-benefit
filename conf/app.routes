@@ -12,10 +12,6 @@ POST        /submit                 controllers.CbsProxyController.submit
 POST        /supplementary-data     controllers.SupplementaryDataController.submit
 POST        /sdes/callback          controllers.SdesCallbackController.callback
 
-GET         /allow-list             controllers.AllowlistController.get
-PUT         /allow-list             controllers.AllowlistController.set
-DELETE      /allow-list             controllers.AllowlistController.delete
-
 GET         /throttle/check         controllers.ThrottleController.checkLimit
 POST        /throttle/increment     controllers.ThrottleController.incrementCount
 
