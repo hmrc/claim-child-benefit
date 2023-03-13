@@ -22,7 +22,7 @@ import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.Application
-import play.api.http.Status.CREATED
+import play.api.http.Status.{CREATED, INTERNAL_SERVER_ERROR, UNPROCESSABLE_ENTITY}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
@@ -48,25 +48,28 @@ class CbsProxyConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures 
 
     "must return the response from calling CBS" in {
 
-      val body = Json.obj("foo" -> "bar")
+      List(CREATED, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR).foreach { status =>
 
-      server.stubFor(
-        post(urlMatching(url))
-          .withRequestBody(equalToJson(Json.stringify(Json.obj())))
-          .withHeader("Environment", equalTo("env"))
-          .withHeader("Authorization", equalTo("Bearer auth"))
-          .withHeader("CorrelationId", equalTo("correlationId"))
-          .willReturn(
-            aResponse()
-              .withStatus(CREATED)
-              .withBody(Json.stringify(body))
-          )
-      )
+        val body = Json.obj("foo" -> "bar")
 
-      val result = connector.submit(Json.obj(), "correlationId")(hc).futureValue
+        server.stubFor(
+          post(urlMatching(url))
+            .withRequestBody(equalToJson(Json.stringify(Json.obj())))
+            .withHeader("Environment", equalTo("env"))
+            .withHeader("Authorization", equalTo("Bearer auth"))
+            .withHeader("CorrelationId", equalTo("correlationId"))
+            .willReturn(
+              aResponse()
+                .withStatus(status)
+                .withBody(Json.stringify(body))
+            )
+        )
 
-      result.status mustEqual CREATED
-      result.body mustEqual Json.stringify(body)
+        val result = connector.submit(Json.obj(), "correlationId")(hc).futureValue
+
+        result.status mustEqual status
+        result.body mustEqual Json.stringify(body)
+      }
     }
 
     "must fail when there is a connection error" in {
