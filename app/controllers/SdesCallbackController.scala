@@ -22,7 +22,7 @@ import models.sdes.{NotificationCallback, NotificationType}
 import play.api.mvc.ControllerComponents
 import play.api.{Configuration, Logging}
 import repositories.SubmissionItemRepository
-import services.RetryService
+import services.{AuditService, RetryService}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendBaseController
 
 import java.time.{Clock, Duration}
@@ -37,6 +37,7 @@ class SdesCallbackController @Inject() (
                                          clock: Clock,
                                          configuration: Configuration,
                                          retryService: RetryService,
+                                         auditService: AuditService
                                        )(implicit ec: ExecutionContext) extends BackendBaseController with Logging {
 
   private val lockTtl: Duration = Duration.ofSeconds(configuration.get[Int]("lock-ttl"))
@@ -53,7 +54,12 @@ class SdesCallbackController @Inject() (
             getNewItemStatus(request.body.notification).map { newStatus =>
               submissionItemRepository.update(item.id, newStatus, request.body.failureReason)
                 .map(_ => Ok)
-            }.getOrElse(Future.successful(Ok))
+            }.getOrElse {
+              Future.successful(Ok)
+            }.map { result =>
+              auditService.auditSupplementaryDataResult(request.body, item)
+              result
+            }
           }
         }.getOrElse {
           logger.warn(s"SDES Callback received for correlationId: ${request.body.correlationID}, with status: ${request.body.notification} but no matching submission was found")

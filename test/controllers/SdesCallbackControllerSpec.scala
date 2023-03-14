@@ -19,6 +19,7 @@ package controllers
 import models.dmsa.{Metadata, ObjectSummary, SubmissionItem, SubmissionItemStatus}
 import models.sdes.{NotificationCallback, NotificationType}
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchersSugar.eqTo
 import org.mockito.{Mockito, MockitoSugar}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -30,6 +31,7 @@ import play.api.libs.json.{JsObject, Json}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories.SubmissionItemRepository
+import services.AuditService
 import utils.NinoGenerator
 
 import java.time.temporal.ChronoUnit
@@ -39,10 +41,12 @@ import scala.concurrent.Future
 class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionValues with MockitoSugar with BeforeAndAfterEach with ScalaFutures {
 
   private val mockSubmissionItemRepository = mock[SubmissionItemRepository]
+  private val mockAuditService = mock[AuditService]
 
   override def beforeEach(): Unit = {
     Mockito.reset[Any](
-      mockSubmissionItemRepository
+      mockSubmissionItemRepository,
+      mockAuditService
     )
     super.beforeEach()
   }
@@ -56,6 +60,7 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
     .overrides(
       bind[Clock].toInstance(clock),
       bind[SubmissionItemRepository].toInstance(mockSubmissionItemRepository),
+      bind[AuditService].toInstance(mockAuditService)
     )
     .build()
 
@@ -98,6 +103,7 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
       status(response) mustEqual OK
       verify(mockSubmissionItemRepository, times(1)).getByCorrelationId(requestBody.correlationID)
       verify(mockSubmissionItemRepository, times(0)).update(any(), any(), any())
+      verify(mockAuditService, times(1)).auditSupplementaryDataResult(eqTo(requestBody.copy(notification = NotificationType.FileReady)), eqTo(item))(any())
     }
 
     "must return OK when the status is updated to FileReceived" in {
@@ -112,6 +118,7 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
       status(response) mustEqual OK
       verify(mockSubmissionItemRepository, times(1)).getByCorrelationId(requestBody.correlationID)
       verify(mockSubmissionItemRepository, times(0)).update(any(), any(), any())
+      verify(mockAuditService, times(1)).auditSupplementaryDataResult(eqTo(requestBody.copy(notification = NotificationType.FileReceived)), eqTo(item))(any())
     }
 
     "must update the status of the submission to Completed and return OK when the status is updated to Processed" in {
@@ -127,6 +134,7 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
       status(response) mustEqual OK
       verify(mockSubmissionItemRepository, times(1)).getByCorrelationId(requestBody.correlationID)
       verify(mockSubmissionItemRepository, times(1)).update(item.id, SubmissionItemStatus.Completed, None)
+      verify(mockAuditService, times(1)).auditSupplementaryDataResult(eqTo(requestBody.copy(notification = NotificationType.FileProcessed)), eqTo(item))(any())
     }
 
     "must update the status of the submission to Failed and return OK when the status is updated to Failed" in {
@@ -142,6 +150,7 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
       status(response) mustEqual OK
       verify(mockSubmissionItemRepository, times(1)).getByCorrelationId(requestBody.correlationID)
       verify(mockSubmissionItemRepository, times(1)).update(item.id, SubmissionItemStatus.Failed, Some("failure reason"))
+      verify(mockAuditService, times(1)).auditSupplementaryDataResult(eqTo(requestBody.copy(notification = NotificationType.FileProcessingFailure, failureReason = Some("failure reason"))), eqTo(item))(any())
     }
 
     "must retry when the item is locked" in {
@@ -161,10 +170,12 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
       status(response) mustEqual OK
       verify(mockSubmissionItemRepository, times(2)).getByCorrelationId(requestBody.correlationID)
       verify(mockSubmissionItemRepository, times(1)).update(item.id, SubmissionItemStatus.Completed, None)
+      verify(mockAuditService, times(1)).auditSupplementaryDataResult(eqTo(requestBody.copy(notification = NotificationType.FileProcessed)), eqTo(item))(any())
     }
 
     "must not have to retry when the lock has expired" in {
-      when(mockSubmissionItemRepository.getByCorrelationId(any())).thenReturn(Future.successful(Some(item.copy(lockedAt = Some(clock.instant().minusSeconds(30))))))
+      val itemWithLock = item.copy(lockedAt = Some(clock.instant().minusSeconds(30)))
+      when(mockSubmissionItemRepository.getByCorrelationId(any())).thenReturn(Future.successful(Some(itemWithLock)))
       when(mockSubmissionItemRepository.update(any(), any(), any())).thenReturn(Future.successful(item))
 
       val request = FakeRequest(routes.SdesCallbackController.callback)
@@ -175,6 +186,7 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
       status(response) mustEqual OK
       verify(mockSubmissionItemRepository, times(1)).getByCorrelationId(requestBody.correlationID)
       verify(mockSubmissionItemRepository, times(1)).update(item.id, SubmissionItemStatus.Completed, None)
+      verify(mockAuditService, times(1)).auditSupplementaryDataResult(eqTo(requestBody.copy(notification = NotificationType.FileProcessed)), eqTo(itemWithLock))(any())
     }
 
     "must return NOT_FOUND when there is no matching submission" in {
@@ -203,6 +215,8 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
         .withJsonBody(Json.toJson(requestBody))
 
       route(app, request).value.failed.futureValue
+
+      verify(mockAuditService, never).auditSupplementaryDataResult(any(), any())(any())
     }
 
     "must fail when the call to update an item fails" in {
@@ -214,6 +228,8 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
         .withJsonBody(Json.toJson(requestBody))
 
       route(app, request).value.failed.futureValue
+
+      verify(mockAuditService, never).auditSupplementaryDataResult(any(), any())(any())
     }
   }
 }
