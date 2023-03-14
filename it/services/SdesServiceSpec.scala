@@ -18,6 +18,7 @@ package services
 
 import connectors.SdesConnector
 import models.Done
+import models.audit.SupplementaryDataSubmittedEvent
 import models.dmsa._
 import models.sdes._
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
@@ -52,6 +53,7 @@ class SdesServiceSpec extends AnyFreeSpec with Matchers
 
   private val clock: Clock = Clock.fixed(Instant.now(), ZoneOffset.UTC)
   private val mockSdesConnector: SdesConnector = mock[SdesConnector]
+  private val mockAuditService: AuditService = mock[AuditService]
 
   override protected lazy val repository = new SubmissionItemRepository(
     mongoComponent = mongoComponent,
@@ -61,7 +63,7 @@ class SdesServiceSpec extends AnyFreeSpec with Matchers
 
   override def beforeEach(): Unit = {
     super.beforeEach()
-    Mockito.reset(mockSdesConnector)
+    Mockito.reset[Any](mockSdesConnector, mockAuditService)
   }
 
   private val app = GuiceApplicationBuilder()
@@ -72,7 +74,8 @@ class SdesServiceSpec extends AnyFreeSpec with Matchers
     )
     .overrides(
       bind[SdesConnector].toInstance(mockSdesConnector),
-      bind[SubmissionItemRepository].toInstance(repository)
+      bind[SubmissionItemRepository].toInstance(repository),
+      bind[AuditService].toInstance(mockAuditService)
     )
     .build()
 
@@ -87,12 +90,12 @@ class SdesServiceSpec extends AnyFreeSpec with Matchers
         location = "location",
         contentLength = 1337,
         contentMd5 = "hash",
-        lastModified = clock.instant().minus(2, ChronoUnit.DAYS)
+        lastModified = clock.instant().minus(2, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MILLIS)
       ),
       metadata = Metadata("foobar", clock.instant(), correlationId),
       failureReason = None,
-      created = clock.instant().minus(1, ChronoUnit.DAYS),
-      lastUpdated = clock.instant().minus(1, ChronoUnit.DAYS),
+      created = clock.instant().minus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MILLIS),
+      lastUpdated = clock.instant().minus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MILLIS),
       sdesCorrelationId = correlationId
     )
   }
@@ -127,6 +130,8 @@ class SdesServiceSpec extends AnyFreeSpec with Matchers
 
       val updatedItem = repository.get(item.id).futureValue.value
       updatedItem.status mustEqual SubmissionItemStatus.Forwarded
+
+      verify(mockAuditService, times(1)).auditSupplementaryDataSubmitted(eqTo(updatedItem))(any())
     }
 
     "must return NotFound when there is no item to process" in {

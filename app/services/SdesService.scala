@@ -32,7 +32,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class SdesService @Inject() (
                               connector: SdesConnector,
                               configuration: Configuration,
-                              repository: SubmissionItemRepository
+                              repository: SubmissionItemRepository,
+                              auditService: AuditService
                             )(implicit ec: ExecutionContext) extends play.api.Logging {
 
   private val informationType: String = configuration.get[String]("services.sdes.information-type")
@@ -42,7 +43,9 @@ class SdesService @Inject() (
   def notifyOldestSubmittedItem(): Future[QueryResult] =
     repository.lockAndReplaceOldestItemByStatus(SubmissionItemStatus.Submitted) { item =>
       notify(item)(HeaderCarrier()).map { _ =>
-        item.copy(status = SubmissionItemStatus.Forwarded)
+        val newItem = item.copy(status = SubmissionItemStatus.Forwarded)
+        auditService.auditSupplementaryDataSubmitted(newItem)(HeaderCarrier())
+        newItem
       }
     }.recover { case e =>
       logger.error("Error notifying SDES about a submitted item", e)

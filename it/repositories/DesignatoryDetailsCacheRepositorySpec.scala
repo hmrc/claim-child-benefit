@@ -35,8 +35,6 @@ class DesignatoryDetailsCacheRepositorySpec
   extends AnyFreeSpec
     with Matchers
     with DefaultPlayMongoRepositorySupport[DesignatoryDetailsCacheItem]
-    with CleanMongoCollectionSupport
-    with IndexedMongoQueriesSupport
     with ScalaFutures
     with IntegrationPatience
     with OptionValues

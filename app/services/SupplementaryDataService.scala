@@ -37,11 +37,11 @@ class SupplementaryDataService @Inject() (
                                          )(implicit ec: ExecutionContext) {
 
   def submitSupplementaryData(pdf: File, metadata: Metadata)(implicit hc: HeaderCarrier): Future[String] = {
-    val requestId = hc.requestId.map(_.value).getOrElse(UUID.randomUUID().toString)
+    val id = hc.requestId.map(_.value).getOrElse(UUID.randomUUID().toString)
     for {
-      objectSummary <- objectStoreClient.putObject(Path.Directory("sdes").file(s"$requestId.pdf"), pdf)
-      _             <- submissionItemRepository.insert(createSubmissionItem(objectSummary, requestId, metadata))
-    } yield requestId
+      objectSummary <- objectStoreClient.putObject(Path.Directory("sdes").file(s"$id.pdf"), pdf)
+      _             <- submissionItemRepository.insert(createSubmissionItem(objectSummary, id, metadata))
+    } yield id
   }
 
   private def createSubmissionItem(objectSummary: ObjectSummaryWithMd5, id: String, metadata: Metadata): SubmissionItem =
