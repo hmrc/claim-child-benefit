@@ -3,6 +3,7 @@ import uk.gov.hmrc.DefaultBuildSettings.integrationTestSettings
 
 lazy val microservice = Project("claim-child-benefit", file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin, BuildInfoPlugin)
+  .disablePlugins(JUnitXmlReportPlugin)
   .settings(
     majorVersion        := 0,
     scalaVersion        := "2.13.10",
