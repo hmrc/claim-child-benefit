@@ -34,8 +34,9 @@ import repositories.SubmissionItemRepository
 import uk.gov.hmrc.crypto.{Decrypter, Encrypter, SymmetricCryptoFactory}
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import java.time.{Clock, Instant, ZoneOffset}
+import java.time.{Clock, Instant, LocalDateTime, ZoneOffset}
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -104,7 +105,17 @@ class SdesServiceSpec extends AnyFreeSpec with Matchers
 
     "must notify SDES for the latest submitted item, update the status to Forwarded, and return Found when there is an item to process" in {
 
-      val item = randomItem
+      val item = {
+        val baseItem = randomItem
+        baseItem.copy(
+          id = "someid",
+          metadata = baseItem.metadata.copy(
+            submissionDate = LocalDateTime.of(2022, 3, 15, 12, 30, 45).toInstant(ZoneOffset.UTC),
+            correlationId = "correlationId"
+          ),
+          sdesCorrelationId = "correlationId"
+        )
+      }
 
       when(mockSdesConnector.notify(any())(any())).thenReturn(Future.successful(Done))
 
@@ -120,7 +131,10 @@ class SdesServiceSpec extends AnyFreeSpec with Matchers
           checksum = FileChecksum("md5", value = "85ab21"),
           size = 1337,
           properties = List(
-            FileProperty("nino", "foobar")
+            FileProperty("nino", "foobar"),
+            FileProperty("mimeType", "application/pdf"),
+            FileProperty("submissionDate", "15/03/2022 12:30:45"),
+            FileProperty("correlationId", "correlationId")
           )
         ),
         FileAudit(item.sdesCorrelationId)
