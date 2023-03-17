@@ -20,9 +20,9 @@ import play.api.libs.json.{Json, OFormat}
 
 final case class Name(
                        title: Option[String],
-                       firstName: String,
+                       firstName: Option[String],
                        middleName: Option[String],
-                       lastName: String
+                       lastName: Option[String]
                      )
 
 object Name {

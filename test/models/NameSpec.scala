@@ -30,17 +30,17 @@ class NameSpec extends AnyFreeSpec with Matchers with OptionValues {
       nameSequenceNumber = 1,
       nameType = 1,
       titleType = 1,
-      firstForename = "first",
+      firstForename = Some("first"),
       secondForename = Some("middle"),
-      surname = "surname",
+      surname = Some("surname"),
       nameEndDate = Some(LocalDate.now)
     )
 
     val output = models.Name(
       title = Some("Mr"),
-      firstName = "first",
+      firstName = Some("first"),
       middleName = Some("middle"),
-      lastName = "surname"
+      lastName = Some("surname")
     )
 
     "must convert a name model from the integration framework to the output model" in {

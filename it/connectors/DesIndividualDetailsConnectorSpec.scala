@@ -57,9 +57,9 @@ class DesIndividualDetailsConnectorSpec extends AnyFreeSpec with Matchers with S
       nameSequenceNumber = 0,
       nameType = 1,
       titleType = 0,
-      firstForename = "first",
+      firstForename = Some("first"),
       secondForename = Some("middle"),
-      surname = "surname",
+      surname = Some("surname"),
       nameEndDate = Some(LocalDate.now)
     )
 
