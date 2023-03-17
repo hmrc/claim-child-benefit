@@ -24,11 +24,11 @@ import org.scalatest.OptionValues
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import uk.gov.hmrc.mongo.test.{CleanMongoCollectionSupport, DefaultPlayMongoRepositorySupport, IndexedMongoQueriesSupport}
+import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 import utils.NinoGenerator
 
-import java.time.{Clock, Instant, LocalDate, ZoneId}
 import java.time.temporal.ChronoUnit
+import java.time.{Clock, Instant, LocalDate, ZoneId}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class DesignatoryDetailsCacheRepositorySpec
@@ -76,8 +76,8 @@ class DesignatoryDetailsCacheRepositorySpec
 
         val nino1 = NinoGenerator.randomNino()
         val nino2 = NinoGenerator.randomNino()
-        val details1 = DesignatoryDetails(LocalDate.of(2020, 2, 1), Some(Name(None, "first 1", None, "last 1")), None, None, None)
-        val details2 = DesignatoryDetails(LocalDate.of(2020, 2, 1), Some(Name(None, "first 2", None, "last 2")), None, None, None)
+        val details1 = DesignatoryDetails(LocalDate.of(2020, 2, 1), Some(Name(None, Some("first 1"), None, Some("last 1"))), None, None, None)
+        val details2 = DesignatoryDetails(LocalDate.of(2020, 2, 1), Some(Name(None, Some("first 2"), None, Some("last 2"))), None, None, None)
 
         val item1 = DesignatoryDetailsCacheItem(nino1, details1, instant)
         val item2 = DesignatoryDetailsCacheItem(nino2, details2, instant)

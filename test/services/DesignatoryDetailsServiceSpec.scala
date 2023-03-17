@@ -16,7 +16,7 @@
 
 package services
 
-import connectors.{IfIndividualDetailsConnector, IndividualDetailsConnector}
+import connectors.IndividualDetailsConnector
 import models.{Country, DesignatoryDetails, Done}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchersSugar.eqTo
@@ -53,39 +53,39 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
       nameSequenceNumber = 1,
       nameType = 1,
       titleType = 1,
-      firstForename = "first",
+      firstForename = Some("first"),
       secondForename = Some("middle"),
-      surname = "real1",
+      surname = Some("real1"),
       nameEndDate = None
     )
 
     val realName2 = realName1.copy(
       nameSequenceNumber = 2,
-      surname = "real2"
+      surname = Some("real2")
     )
 
     val realName3 = realName1.copy(
       nameSequenceNumber = 3,
-      surname = "real3",
+      surname = Some("real3"),
       nameEndDate = Some(LocalDate.now)
     )
 
     val knownAs1 = realName1.copy(
       nameSequenceNumber = 4,
       nameType = 2,
-      surname = "knownAs1"
+      surname = Some("knownAs1")
     )
 
     val knownAs2 = realName1.copy(
       nameSequenceNumber = 5,
       nameType = 2,
-      surname = "knownAs2"
+      surname = Some("knownAs2")
     )
 
     val knownAs3 = realName1.copy(
       nameSequenceNumber = 6,
       nameType = 2,
-      surname = "knownAs3",
+      surname = Some("knownAs3"),
       nameEndDate = Some(LocalDate.now)
     )
 
@@ -157,16 +157,16 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
 
     val realName = models.Name(
       title = Some("Mr"),
-      firstName = "first",
+      firstName = Some("first"),
       middleName = Some("middle"),
-      lastName = "real2"
+      lastName = Some("real2")
     )
 
     val knownAsName = models.Name(
       title = Some("Mr"),
-      firstName = "first",
+      firstName = Some("first"),
       middleName = Some("middle"),
-      lastName = "knownAs2"
+      lastName = Some("knownAs2")
     )
 
     val residentialAddress = models.Address(

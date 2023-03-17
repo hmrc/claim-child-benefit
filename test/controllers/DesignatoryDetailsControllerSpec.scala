@@ -76,9 +76,9 @@ class DesignatoryDetailsControllerSpec
 
         val name = models.Name(
           title = Some("Mr"),
-          firstName = "first",
+          firstName = Some("first"),
           middleName = Some("middle"),
-          lastName = "real2"
+          lastName = Some("real2")
         )
 
         val residentialAddress = models.Address(

@@ -72,9 +72,9 @@ final case class Name(
                        nameSequenceNumber: Int,
                        nameType: Int,
                        titleType: Int,
-                       firstForename: String,
+                       firstForename: Option[String],
                        secondForename: Option[String],
-                       surname: String,
+                       surname: Option[String],
                        nameEndDate: Option[LocalDate]
                      )
 
