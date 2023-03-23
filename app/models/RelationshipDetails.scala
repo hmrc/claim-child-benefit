@@ -18,7 +18,14 @@ package models
 
 import play.api.libs.json.{Json, OFormat}
 
-final case class RelationshipDetails(relationships: Relationships)
+final case class RelationshipDetails(relationships: Relationships) {
+
+  lazy val hasClaimedChildBenefit: Boolean =
+    relationships.relationship.getOrElse(Nil).exists(r =>
+      r.relationshipType == RelationshipType.AdultChild &&
+        r.relationshipSource == RelationshipSource.CHB
+    )
+}
 
 object RelationshipDetails {
   implicit val format: OFormat[RelationshipDetails] = Json.format
