@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package models
+package models.relationship
 
-class WithName(val name: String) {
-  override val toString: String = name
+import play.api.libs.json.{Json, OFormat}
+
+final case class Relationships(relationship: Option[List[Relationship]])
+
+object Relationships {
+  implicit val format: OFormat[Relationships] = Json.format
 }
