@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package models.relationship
+package models
 
 import play.api.libs.json.{Json, OFormat}
 
-final case class Relationships(relationship: Option[List[Relationship]])
+final case class RelationshipDetails(relationships: Relationships)
 
-object Relationships {
-  implicit val format: OFormat[Relationships] = Json.format
+object RelationshipDetails {
+  implicit val format: OFormat[RelationshipDetails] = Json.format
 }

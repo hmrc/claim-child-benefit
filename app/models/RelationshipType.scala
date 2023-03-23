@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package models.relationship
-
-import models.{Enumerable, WithName}
+package models
 
 sealed trait RelationshipType
 

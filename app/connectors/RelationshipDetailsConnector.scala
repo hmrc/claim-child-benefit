@@ -17,7 +17,7 @@
 package connectors
 
 import config.Service
-import models.relationship.Relationships
+import models.RelationshipDetails
 import play.api.Configuration
 import play.api.http.HeaderNames
 import uk.gov.hmrc.http.client.HttpClientV2
@@ -38,11 +38,11 @@ class RelationshipDetailsConnector @Inject()(
   private val environment: String = configuration.get[String]("microservice.services.relationship-details.environment")
 
   def getRelationships(nino: String, correlationId: String = UUID.randomUUID().toString)
-                      (implicit hc: HeaderCarrier): Future[Relationships] =
+                      (implicit hc: HeaderCarrier): Future[RelationshipDetails] =
     httpClient.get(url"${service.baseUrl}/individuals/relationship/$nino")
       .setHeader(HeaderNames.AUTHORIZATION -> s"Bearer $apiKey")
       .setHeader("OriginatorId" -> originatorId)
       .setHeader("Environment" -> environment)
       .setHeader("CorrelationId" -> correlationId)
-      .execute[Relationships]
+      .execute[RelationshipDetails]
 }

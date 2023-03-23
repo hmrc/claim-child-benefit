@@ -18,7 +18,7 @@ package connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.http.Fault
-import models.relationship.{Relationship, RelationshipSource, RelationshipType, Relationships}
+import models.{Relationship, RelationshipDetails, RelationshipSource, RelationshipType, Relationships}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -56,11 +56,13 @@ class RelationshipDetailsConnectorSpec
 
     val hc = HeaderCarrier()
 
-    val expectedResult = Relationships(
-      Some(List(
-        Relationship(
-          relationshipType = RelationshipType.AdultChild,
-          relationshipSource = RelationshipSource.CHB
+    val expectedResult = RelationshipDetails(
+      Relationships(
+        Some(List(
+          Relationship(
+            relationshipType = RelationshipType.AdultChild,
+            relationshipSource = RelationshipSource.CHB
+          )
         )
       )
     ))

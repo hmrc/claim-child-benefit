@@ -22,23 +22,23 @@ import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import java.time.Instant
 
-final case class DesignatoryDetailsCacheItem(nino: String, details: DesignatoryDetails, timestamp: Instant)
+final case class RelationshipDetailsCacheItem(nino: String, details: RelationshipDetails, timestamp: Instant)
 
-object DesignatoryDetailsCacheItem {
+object RelationshipDetailsCacheItem {
 
-  val reads: Reads[DesignatoryDetailsCacheItem] =
+  val reads: Reads[RelationshipDetailsCacheItem] =
     (
       (__ \ "_id").read[String] and
-      (__ \ "details").read[DesignatoryDetails] and
+      (__ \ "details").read[RelationshipDetails] and
       (__ \ "timestamp").read(MongoJavatimeFormats.instantFormat)
-    )(DesignatoryDetailsCacheItem.apply _)
+    )(RelationshipDetailsCacheItem.apply _)
 
-  val writes: OWrites[DesignatoryDetailsCacheItem] =
+  val writes: OWrites[RelationshipDetailsCacheItem] =
     (
       (__ \ "_id").write[String] and
-      (__ \ "details").write[DesignatoryDetails] and
+      (__ \ "details").write[RelationshipDetails] and
       (__ \ "timestamp").write(MongoJavatimeFormats.instantFormat)
-    )(unlift(DesignatoryDetailsCacheItem.unapply))
+    )(unlift(RelationshipDetailsCacheItem.unapply))
 
-  implicit val format: OFormat[DesignatoryDetailsCacheItem] = OFormat(reads, writes)
+  implicit val format: OFormat[RelationshipDetailsCacheItem] = OFormat(reads, writes)
 }

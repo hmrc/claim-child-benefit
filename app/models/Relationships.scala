@@ -14,20 +14,12 @@
  * limitations under the License.
  */
 
-package models.relationship
+package models
 
-import models.{Enumerable, WithName}
+import play.api.libs.json.{Json, OFormat}
 
-sealed trait RelationshipSource
+final case class Relationships(relationship: Option[List[Relationship]])
 
-object RelationshipSource extends Enumerable.Implicits {
-
-  case object TFC extends WithName("TFC") with RelationshipSource
-  case object EFE extends WithName("EFE") with RelationshipSource
-  case object CHB extends WithName("CHB") with RelationshipSource
-
-  val values: Seq[RelationshipSource] = Seq(TFC, EFE, CHB)
-
-  implicit val enumerable: Enumerable[RelationshipSource] =
-    Enumerable(values.map(v => v.toString -> v): _*)
+object Relationships {
+  implicit val format: OFormat[Relationships] = Json.format
 }
