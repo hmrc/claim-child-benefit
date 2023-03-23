@@ -17,3 +17,5 @@ POST        /throttle/increment     controllers.ThrottleController.incrementCoun
 
 GET         /admin/throttle         controllers.ThrottleAdminController.get
 PUT         /admin/throttle/limit   controllers.ThrottleAdminController.setLimit
+
+GET         /relationship-details   controllers.RelationshipDetailsController.get
