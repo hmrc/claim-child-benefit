@@ -19,18 +19,18 @@ package api
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import com.github.tomakehurst.wiremock.client.WireMock._
-import models.dmsa.{SubmissionItemStatus, SubmissionResponse}
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
+import models.dmsa.{SubmissionItem, SubmissionItemStatus, SubmissionResponse}
 import org.scalatest.concurrent.Eventually.eventually
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.time.{Seconds, Span}
+import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
-import play.api.http.Status.{ACCEPTED, CREATED, NO_CONTENT, OK}
+import play.api.http.Status.{ACCEPTED, CREATED, OK}
+import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsValue, Json}
 import play.api.libs.ws.ahc.StandaloneAhcWSClient
@@ -39,18 +39,16 @@ import play.api.test.Helpers.AUTHORIZATION
 import play.api.test.RunningServer
 import repositories.SubmissionItemRepository
 import uk.gov.hmrc.http.HeaderNames.xRequestId
-import uk.gov.hmrc.http.RequestId
-import util.WireMockHelper
+import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 import utils.NinoGenerator
 
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
-import java.time.{Instant, LocalDateTime, ZoneOffset}
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import java.time.{Instant, LocalDateTime, ZoneOffset}
 import java.util.UUID
 
-class SupplementaryDataSubmissionSpec extends AnyFreeSpec with Matchers with ScalaFutures with IntegrationPatience with BeforeAndAfterEach with GuiceOneServerPerSuite with OptionValues {
+class SupplementaryDataSubmissionSpec extends AnyFreeSpec with Matchers with DefaultPlayMongoRepositorySupport[SubmissionItem] with ScalaFutures with IntegrationPatience with BeforeAndAfterEach with GuiceOneServerPerSuite with OptionValues {
 
   private implicit val actorSystem: ActorSystem = ActorSystem()
   private val httpClient: StandaloneAhcWSClient = StandaloneAhcWSClient()
@@ -58,15 +56,19 @@ class SupplementaryDataSubmissionSpec extends AnyFreeSpec with Matchers with Sca
   private val sdesStubBaseUrl: String = "http://localhost:9191"
   private val claimChildBenefitAuthToken: String = UUID.randomUUID().toString
   private val clientAuthToken: String = UUID.randomUUID().toString
-  private lazy val submissionRepository: SubmissionItemRepository = fakeApplication().injector.instanceOf[SubmissionItemRepository]
 
   override def fakeApplication(): Application = GuiceApplicationBuilder()
+    .overrides(
+      bind[MongoComponent].toInstance(mongoComponent)
+    )
     .configure(
       "internal-auth.token" -> claimChildBenefitAuthToken,
       "workers.initial-delay" -> "0 seconds",
       "workers.sdes-notification-worker.interval" -> "1 second",
     )
     .build()
+
+  override protected lazy val repository: SubmissionItemRepository = app.injector.instanceOf[SubmissionItemRepository]
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -93,12 +95,10 @@ class SupplementaryDataSubmissionSpec extends AnyFreeSpec with Matchers with Sca
     val submissionDate = Instant.now().truncatedTo(ChronoUnit.SECONDS)
     val submissionDateString = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.ofInstant(submissionDate, ZoneOffset.UTC))
     val correlationId = UUID.randomUUID().toString
-    val requestId = UUID.randomUUID().toString
 
     val response = httpClient.url(s"http://localhost:$port/claim-child-benefit/supplementary-data")
       .withHttpHeaders(
         AUTHORIZATION -> clientAuthToken,
-        xRequestId -> requestId
       )
       .post(
         Source(Seq(
@@ -117,10 +117,10 @@ class SupplementaryDataSubmissionSpec extends AnyFreeSpec with Matchers with Sca
 
     response.status mustEqual ACCEPTED
 
-    response.body[JsValue].as[SubmissionResponse.Success].id mustEqual requestId
+    val id = response.body[JsValue].as[SubmissionResponse.Success].id
 
     eventually(Timeout(Span(30, Seconds))) {
-      submissionRepository.get(requestId).futureValue.value.status mustEqual SubmissionItemStatus.Completed
+      repository.get(id).futureValue.value.status mustEqual SubmissionItemStatus.Completed
     }
   }
 

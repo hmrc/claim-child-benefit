@@ -31,7 +31,7 @@ import org.scalatest.matchers.must.Matchers
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import repositories.SubmissionItemRepository
-import uk.gov.hmrc.http.{HeaderCarrier, RequestId}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.objectstore.client.play.PlayObjectStoreClient
 import uk.gov.hmrc.objectstore.client.{Md5Hash, ObjectSummaryWithMd5, Path}
 
@@ -78,20 +78,20 @@ class SupplementaryDataServiceSpec extends AnyFreeSpec with Matchers with Mockit
 
     val metadata = Metadata("foobar", clock.instant(), "correlationId")
 
-    val hc = HeaderCarrier(requestId = Some(RequestId("requestId")))
+    val hc = HeaderCarrier()
 
     val objectSummaryWithMd5 = ObjectSummaryWithMd5(
-      location = Path.File("sdes/requestId.pdf"),
+      location = Path.File("sdes/some_id.pdf"),
       contentLength = 1337L,
       contentMd5 = Md5Hash("hash"),
       lastModified = clock.instant().minus(2, ChronoUnit.DAYS)
     )
 
     val expectedSubmissionItem = SubmissionItem(
-      id = "requestId",
+      id = "correlationId",
       status = SubmissionItemStatus.Submitted,
       objectSummary = ObjectSummary(
-        location = "sdes/requestId.pdf",
+        location = "sdes/some_id.pdf",
         contentLength = 1337,
         contentMd5 = "hash",
         lastModified = clock.instant().minus(2, ChronoUnit.DAYS)
@@ -111,15 +111,14 @@ class SupplementaryDataServiceSpec extends AnyFreeSpec with Matchers with Mockit
       when(mockObjectStoreClient.putObject[Source[ByteString, _]](any(), any(), any(), any(), any(), any())(any(), any())).thenReturn(Future.successful(objectSummaryWithMd5))
       when(mockSubmissionItemRepository.insert(any())).thenReturn(Future.successful(Done))
 
-      val result = service.submitSupplementaryData(file.toJava, metadata)(hc).futureValue
-      result mustEqual "requestId"
+      val id = service.submitSupplementaryData(file.toJava, metadata)(hc).futureValue
 
-      verify(mockObjectStoreClient).putObject(eqTo(Path.File("sdes/requestId.pdf")), eqTo(file.path.toFile), any(), any(), any(), any())(any(), any())
+      verify(mockObjectStoreClient).putObject(any(), eqTo(file.path.toFile), any(), any(), any(), any())(any(), any())
       verify(mockSubmissionItemRepository).insert(submissionItemCaptor.capture())
 
       val actualSubmissionItem = submissionItemCaptor.getValue
 
-      actualSubmissionItem mustEqual expectedSubmissionItem
+      actualSubmissionItem mustEqual expectedSubmissionItem.copy(id = id)
     }
 
     "must fail when object store fails" in {
