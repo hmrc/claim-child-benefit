@@ -133,7 +133,7 @@ class SdesServiceSpec extends AnyFreeSpec with Matchers
           properties = List(
             FileProperty("nino", "foobar"),
             FileProperty("mimeType", "application/pdf"),
-            FileProperty("submissionDate", "15/03/2022 12:30:45"),
+            FileProperty("submissionDate", "2022-03-15T12:30:45Z"),
             FileProperty("correlationId", "correlationId")
           )
         ),
