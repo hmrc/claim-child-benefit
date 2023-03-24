@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package config
+package models
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+sealed trait RelationshipSource
 
-import scala.concurrent.duration.Duration
+object RelationshipSource extends Enumerable.Implicits {
 
-@Singleton
-class AppConfig @Inject()(config: Configuration) {
+  case object TFC extends WithName("TFC") with RelationshipSource
+  case object EFE extends WithName("EFE") with RelationshipSource
+  case object CHB extends WithName("CHB") with RelationshipSource
 
-  val appName: String = config.get[String]("appName")
-  val userDataTtlInDays: Int = config.get[Int]("mongodb.userDataTtlInDays")
-  val designatoryDetailsTtlInSeconds = config.get[Int]("mongodb.designatoryDetailsTtlInSeconds")
-  val relationshipDetailsTtlInSeconds = config.get[Int]("mongodb.relationshipDetailsTtlInSeconds")
+  val values: Seq[RelationshipSource] = Seq(TFC, EFE, CHB)
+
+  implicit val enumerable: Enumerable[RelationshipSource] =
+    Enumerable(values.map(v => v.toString -> v): _*)
 }

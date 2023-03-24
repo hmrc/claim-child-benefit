@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-package config
+package models
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+import play.api.libs.json.{Json, OFormat}
 
-import scala.concurrent.duration.Duration
+final case class RelationshipDetails(relationships: Relationships) {
 
-@Singleton
-class AppConfig @Inject()(config: Configuration) {
+  lazy val hasClaimedChildBenefit: Boolean =
+    relationships.relationship.getOrElse(Nil).exists(r =>
+      r.relationshipType == RelationshipType.AdultChild &&
+        r.relationshipSource == RelationshipSource.CHB
+    )
+}
 
-  val appName: String = config.get[String]("appName")
-  val userDataTtlInDays: Int = config.get[Int]("mongodb.userDataTtlInDays")
-  val designatoryDetailsTtlInSeconds = config.get[Int]("mongodb.designatoryDetailsTtlInSeconds")
-  val relationshipDetailsTtlInSeconds = config.get[Int]("mongodb.relationshipDetailsTtlInSeconds")
+object RelationshipDetails {
+  implicit val format: OFormat[RelationshipDetails] = Json.format
 }
