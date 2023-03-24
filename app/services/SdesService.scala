@@ -42,7 +42,7 @@ class SdesService @Inject() (
   private val recipientOrSender: String = configuration.get[String]("services.sdes.recipient-or-sender")
   private val objectStoreLocationPrefix: String = configuration.get[String]("services.sdes.object-store-location-prefix")
 
-  private val submissionDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
+  private val submissionDateFormat: DateTimeFormatter = DateTimeFormatter.ISO_INSTANT
 
   def notifyOldestSubmittedItem(): Future[QueryResult] =
     repository.lockAndReplaceOldestItemByStatus(SubmissionItemStatus.Submitted) { item =>
@@ -68,7 +68,7 @@ class SdesService @Inject() (
   private def createRequest(item: SubmissionItem): FileNotifyRequest = {
 
     val submissionDate =
-      submissionDateFormat.format(LocalDateTime.ofInstant(item.metadata.submissionDate, ZoneOffset.UTC))
+      submissionDateFormat.format(item.metadata.submissionDate)
 
     FileNotifyRequest(
       informationType = informationType,
