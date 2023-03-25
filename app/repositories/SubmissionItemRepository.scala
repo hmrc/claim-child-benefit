@@ -17,9 +17,9 @@
 package repositories
 
 import models.Done
-import models.dmsa.{DailySummary, QueryResult, SubmissionItem, SubmissionItemStatus}
+import models.dmsa.{DailySummary, ListResult, QueryResult, SubmissionItem, SubmissionItemStatus}
 import org.bson.conversions.Bson
-import org.mongodb.scala.model.{Aggregates, Filters, FindOneAndUpdateOptions, IndexModel, IndexOptions, Indexes, ReturnDocument, Sorts, Updates}
+import org.mongodb.scala.model.{Aggregates, Facet, Filters, FindOneAndUpdateOptions, IndexModel, IndexOptions, Indexes, ReturnDocument, Sorts, Updates}
 import play.api.Configuration
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.crypto.{Decrypter, Encrypter}
@@ -27,7 +27,7 @@ import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.Codecs.JsonOps
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 
-import java.time.{Clock, Duration}
+import java.time.{Clock, Duration, LocalDate, ZoneOffset}
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -67,8 +67,11 @@ class SubmissionItemRepository @Inject() (
       )
     ),
     extraCodecs =
-      Codecs.playFormatSumCodecs(SubmissionItemStatus.format) :+
-        Codecs.playFormatCodec(DailySummary.mongoFormat)
+      Codecs.playFormatSumCodecs(SubmissionItemStatus.format) ++
+        Seq(
+          Codecs.playFormatCodec(DailySummary.mongoFormat),
+          Codecs.playFormatCodec(ListResult.format)
+        )
   ) {
 
   private val lockTtl: Duration = Duration.ofSeconds(configuration.get[Int]("lock-ttl"))
@@ -174,6 +177,47 @@ class SubmissionItemRepository @Inject() (
     collection.aggregate[DailySummary](List(
       groupExpression.toDocument()
     )).toFuture()
+  }
+
+  def list(
+            status: Option[SubmissionItemStatus] = None,
+            created: Option[LocalDate] = None,
+            limit: Int = 50,
+            offset: Int = 0
+          ): Future[ListResult] = {
+
+    val statusFilter = status.toList.map(Filters.equal("status", _))
+    val createdFilter = created.toList.flatMap { date =>
+      List(
+        Filters.gte("created", date.atStartOfDay(ZoneOffset.UTC).toInstant),
+        Filters.lt("created", date.atStartOfDay(ZoneOffset.UTC).plusDays(1).toInstant)
+      )
+    }
+    val filters = Filters.and(List(List(Filters.empty()), statusFilter, createdFilter).flatten: _*)
+
+    val findCount = Json.obj(
+      "$let" -> Json.obj(
+        "vars" -> Json.obj(
+          "countValue" -> Json.obj(
+            "$arrayElemAt" -> Json.arr("$totalCount", 0)
+          )
+        ),
+        "in" -> "$$countValue.count"
+      )
+    )
+
+    collection.aggregate[ListResult](List(
+      Aggregates.`match`(filters),
+      Aggregates.sort(Sorts.descending("created")),
+      Aggregates.facet(
+        Facet("totalCount", Aggregates.count()),
+        Facet("summaries", Aggregates.skip(offset), Aggregates.limit(limit))
+      ),
+      Aggregates.project(Json.obj(
+        "totalCount" -> findCount,
+        "summaries" -> "$summaries"
+      ).toDocument())
+    )).head()
   }
 }
 
