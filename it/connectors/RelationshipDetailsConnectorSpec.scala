@@ -70,7 +70,8 @@ class RelationshipDetailsConnectorSpec
     "must return relationships when they exist" in {
 
       val nino = NinoGenerator.randomNino()
-      val url = s"/individuals/relationship/$nino"
+      val trimmedNino = nino.take(8)
+      val url = s"/individuals/relationship/$trimmedNino"
       val correlationId = UUID.randomUUID().toString
 
       server.stubFor(
@@ -92,7 +93,8 @@ class RelationshipDetailsConnectorSpec
     "must return a failed future when the server responds with anything else" in {
 
       val nino = NinoGenerator.randomNino()
-      val url = s"/individuals/relationship/$nino"
+      val trimmedNino = nino.take(8)
+      val url = s"/individuals/relationship/$trimmedNino"
 
       server.stubFor(
         get(urlPathEqualTo(url))
@@ -109,7 +111,8 @@ class RelationshipDetailsConnectorSpec
     "must return a failed future when there is a connection error" in {
 
       val nino = NinoGenerator.randomNino()
-      val url = s"/individuals/relationship/$nino"
+      val trimmedNino = nino.take(8)
+      val url = s"/individuals/relationship/$trimmedNino"
 
       server.stubFor(
         get(urlPathEqualTo(url))
