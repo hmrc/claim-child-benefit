@@ -43,6 +43,7 @@ object SubmissionItem {
 
   val apiWrites: OWrites[SubmissionItem] = {
     implicit lazy val metadataWrites: OWrites[Metadata] = Metadata.apiWrites
+    implicit lazy val objectSummaryWrites: OWrites[ObjectSummary] = ObjectSummary.apiFormat
     Json.writes
   }
 }

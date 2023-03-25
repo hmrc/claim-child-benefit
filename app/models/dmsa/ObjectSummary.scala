@@ -16,7 +16,7 @@
 
 package models.dmsa
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{Format, Json, OFormat}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import java.time.Instant
@@ -28,6 +28,12 @@ final case class ObjectSummary(
                                 lastModified: Instant
                               )
 
-object ObjectSummary extends MongoJavatimeFormats.Implicits {
-  implicit lazy val format: OFormat[ObjectSummary] = Json.format
+object ObjectSummary {
+
+  implicit lazy val format: OFormat[ObjectSummary] = {
+    implicit val instantFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
+    Json.format
+  }
+
+  val apiFormat: OFormat[ObjectSummary] = Json.format
 }

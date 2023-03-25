@@ -24,5 +24,11 @@ final case class ListResult (
                             )
 
 object ListResult {
+
   implicit lazy val format: OFormat[ListResult] = Json.format
+
+  lazy val apiFormat: OFormat[ListResult] = {
+    implicit lazy val submissionSummaryFormat: OFormat[SubmissionSummary] = SubmissionSummary.apiFormat
+    Json.format
+  }
 }

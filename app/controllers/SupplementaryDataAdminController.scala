@@ -16,11 +16,10 @@
 
 package controllers
 
-import models.dmsa.{SubmissionItem, SubmissionItemStatus}
+import models.dmsa.{ListResult, SubmissionItem, SubmissionItemStatus}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import repositories.SubmissionItemRepository
-import uk.gov.hmrc.crypto.{Decrypter, Encrypter}
 import uk.gov.hmrc.internalauth.client.Predicate.Permission
 import uk.gov.hmrc.internalauth.client._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendBaseController
@@ -33,7 +32,7 @@ class SupplementaryDataAdminController @Inject()(
                                            override val controllerComponents: ControllerComponents,
                                            submissionItemRepository: SubmissionItemRepository,
                                            auth: BackendAuthComponents
-                                         )(implicit ec: ExecutionContext, crypto: Encrypter with Decrypter) extends BackendBaseController {
+                                         )(implicit ec: ExecutionContext) extends BackendBaseController {
 
   private val authorised =
     auth.authorizedAction(Permission(
@@ -53,7 +52,7 @@ class SupplementaryDataAdminController @Inject()(
 
     authorised.async {
       submissionItemRepository.list(status, created, limit, offset)
-        .map(listResult => Ok(Json.toJson(listResult)))
+        .map(listResult => Ok(Json.toJson(listResult)(ListResult.apiFormat)))
     }
   }
 

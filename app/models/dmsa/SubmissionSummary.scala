@@ -16,7 +16,7 @@
 
 package models.dmsa
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{Format, Json, OFormat}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import java.time.Instant
@@ -28,9 +28,7 @@ final case class SubmissionSummary(
                                     lastUpdated: Instant
                                   )
 
-object SubmissionSummary extends MongoJavatimeFormats.Implicits {
-
-  implicit lazy val format: OFormat[SubmissionSummary] = Json.format
+object SubmissionSummary {
 
   def apply(submissionItem: SubmissionItem): SubmissionSummary =
     SubmissionSummary(
@@ -39,4 +37,13 @@ object SubmissionSummary extends MongoJavatimeFormats.Implicits {
       failureReason = submissionItem.failureReason,
       lastUpdated = submissionItem.lastUpdated
     )
+
+  implicit lazy val format: OFormat[SubmissionSummary] = {
+    implicit val instantFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
+    Json.format
+  }
+
+
+  lazy val apiFormat: OFormat[SubmissionSummary] =
+    Json.format
 }
