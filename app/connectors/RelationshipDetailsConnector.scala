@@ -38,11 +38,15 @@ class RelationshipDetailsConnector @Inject()(
   private val environment: String = configuration.get[String]("microservice.services.relationship-details.environment")
 
   def getRelationships(nino: String, correlationId: String = UUID.randomUUID().toString)
-                      (implicit hc: HeaderCarrier): Future[RelationshipDetails] =
-    httpClient.get(url"${service.baseUrl}/individuals/relationship/$nino")
+                      (implicit hc: HeaderCarrier): Future[RelationshipDetails] = {
+
+    val trimmedNino = nino.take(8)
+
+    httpClient.get(url"${service.baseUrl}/individuals/relationship/$trimmedNino")
       .setHeader(HeaderNames.AUTHORIZATION -> s"Bearer $apiKey")
       .setHeader("OriginatorId" -> originatorId)
       .setHeader("Environment" -> environment)
       .setHeader("CorrelationId" -> correlationId)
       .execute[RelationshipDetails]
+  }
 }
