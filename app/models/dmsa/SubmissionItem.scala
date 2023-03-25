@@ -16,7 +16,7 @@
 
 package models.dmsa
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{Format, Json, OFormat, OWrites}
 import uk.gov.hmrc.crypto.{Decrypter, Encrypter}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
@@ -34,8 +34,15 @@ final case class SubmissionItem(
                                  lockedAt: Option[Instant] = None
                                )
 
-object SubmissionItem extends MongoJavatimeFormats.Implicits {
+object SubmissionItem {
 
-  implicit def format(implicit crypto: Encrypter with Decrypter): OFormat[SubmissionItem] =
+  implicit def format(implicit crypto: Encrypter with Decrypter): OFormat[SubmissionItem] = {
+    implicit lazy val instantFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
     Json.format
+  }
+
+  val apiWrites: OWrites[SubmissionItem] = {
+    implicit lazy val metadataWrites: OWrites[Metadata] = Metadata.apiWrites
+    Json.writes
+  }
 }

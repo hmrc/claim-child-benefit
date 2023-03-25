@@ -1,3 +1,4 @@
+import play.sbt.routes.RoutesKeys
 import uk.gov.hmrc.DefaultBuildSettings.targetJvm
 import uk.gov.hmrc.DefaultBuildSettings.integrationTestSettings
 
@@ -15,6 +16,11 @@ lazy val microservice = Project("claim-child-benefit", file("."))
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
     buildInfoKeys := Seq[BuildInfoKey](name, version, PlayKeys.playDefaultPort),
     buildInfoPackage := "buildinfo",
+    RoutesKeys.routesImport ++= Seq(
+      "models._",
+      "models.dmsa._",
+      "java.time.LocalDate"
+    )
   )
   .settings(inConfig(Test)(testSettings): _*)
   .configs(IntegrationTest)
