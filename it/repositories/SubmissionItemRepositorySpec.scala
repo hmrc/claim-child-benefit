@@ -16,6 +16,7 @@
 
 package repositories
 
+import cats.implicits.toTraverseOps
 import models.dmsa._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
@@ -27,7 +28,7 @@ import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 import util.MutableClock
 
 import java.time.temporal.ChronoUnit
-import java.time.{Duration, Instant}
+import java.time.{Duration, Instant, LocalDate}
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
@@ -260,6 +261,29 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
       promise.failure(new RuntimeException())
       runningFuture.failed.futureValue
       repository.get(item.id).futureValue.value.lockedAt.value mustEqual clock.instant()
+    }
+  }
+
+  "dailySummaries" - {
+
+    "must return a summary for every day where there are records" in {
+
+      List(
+        randomItem.copy(status = SubmissionItemStatus.Completed, created = clock.instant()),
+        randomItem.copy(status = SubmissionItemStatus.Completed, created = clock.instant()),
+        randomItem.copy(status = SubmissionItemStatus.Failed, created = clock.instant()),
+        randomItem.copy(status = SubmissionItemStatus.Submitted, created = clock.instant()),
+        randomItem.copy(status = SubmissionItemStatus.Forwarded, created = clock.instant()),
+        randomItem.copy(status = SubmissionItemStatus.Completed, created = clock.instant().minus(Duration.ofDays(10)))
+      ).traverse(repository.insert)
+        .futureValue
+
+      val result = repository.dailySummaries.futureValue
+
+      result must contain theSameElementsAs List(
+        DailySummary(date = LocalDate.now(clock), submitted = 1, forwarded = 1, failed = 1, completed = 2),
+        DailySummary(date = LocalDate.now(clock).minusDays(10), submitted = 0, forwarded = 0, failed = 0, completed = 1)
+      )
     }
   }
 
