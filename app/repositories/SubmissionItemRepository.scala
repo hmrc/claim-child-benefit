@@ -219,6 +219,9 @@ class SubmissionItemRepository @Inject() (
       ).toDocument())
     )).head()
   }
+
+  def countByStatus(status: SubmissionItemStatus): Future[Long] =
+    collection.countDocuments(Filters.equal("status", status)).toFuture()
 }
 
 object SubmissionItemRepository {
