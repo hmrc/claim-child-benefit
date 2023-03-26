@@ -114,7 +114,7 @@ class SupplementaryDataAdminControllerSpec
 
       status(result) mustEqual OK
 
-      contentAsJson(result) mustEqual Json.toJson(listResult)
+      contentAsJson(result) mustEqual Json.toJson(listResult)(ListResult.apiFormat)
 
       verify(mockSubmissionItemRepository).list(
         status = Some(SubmissionItemStatus.Completed),
