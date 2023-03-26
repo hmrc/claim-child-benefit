@@ -16,28 +16,24 @@
 
 package controllers
 
-import repositories.UserDataRepository
-import services.RelationshipDetailsService
-import uk.gov.hmrc.auth.core.AuthConnector
-import models.{Country, RelationshipDetails, RelationshipDetailsResponse, Relationships}
+import models.{RelationshipDetails, RelationshipDetailsResponse, Relationships}
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.{Mockito, MockitoSugar}
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
-import play.api.inject.guice.GuiceApplicationBuilder
+import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import play.api.inject.bind
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories.UserDataRepository
-import services.DesignatoryDetailsService
+import services.RelationshipDetailsService
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.auth.core.retrieve.~
 import utils.NinoGenerator
 
-import java.time.LocalDate
 import scala.concurrent.Future
 
 class RelationshipDetailsControllerSpec

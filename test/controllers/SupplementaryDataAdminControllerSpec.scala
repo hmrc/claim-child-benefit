@@ -71,8 +71,6 @@ class SupplementaryDataAdminControllerSpec
     )
     .build()
 
-  private implicit val crypter: Encrypter with Decrypter = app.injector.instanceOf[Encrypter with Decrypter]
-
   private val item = SubmissionItem(
     id = "id",
     status = SubmissionItemStatus.Submitted,

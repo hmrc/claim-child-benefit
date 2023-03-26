@@ -20,8 +20,10 @@ import cats.effect.unsafe.IORuntime
 import connectors.{DesIndividualDetailsConnector, IfIndividualDetailsConnector, IndividualDetailsConnector}
 import play.api.inject.Binding
 import play.api.{Configuration, Environment}
+import services.FileSystemMetricsService
 import uk.gov.hmrc.crypto.{Decrypter, Encrypter}
-import workers.SdesNotificationWorker
+import uk.gov.hmrc.mongo.metrix.MetricOrchestrator
+import workers.{MetricOrchestratorWorker, SdesNotificationWorker}
 
 import java.time.Clock
 
@@ -39,13 +41,22 @@ class Module extends play.api.inject.Module {
         bind[IndividualDetailsConnector].to[IfIndividualDetailsConnector].eagerly()
       } else bind[IndividualDetailsConnector].to[DesIndividualDetailsConnector].eagerly()
 
+    val workerBindings: Seq[Binding[_]] =
+      if (configuration.get[Boolean]("workers.enabled")) {
+        Seq(
+          bind[SdesNotificationWorker].toSelf.eagerly(),
+          bind[MetricOrchestratorWorker].toSelf.eagerly()
+        )
+      } else Seq.empty
+
     Seq(
       bind[AppConfig].toSelf.eagerly(),
       bind[Clock].toInstance(Clock.systemUTC()),
       bind[IORuntime].toProvider[IORuntimeProvider],
-      bind[SdesNotificationWorker].toSelf.eagerly(),
       bind[Encrypter with Decrypter].toProvider[CryptoProvider],
+      bind[MetricOrchestrator].toProvider[MetricOrchestratorProvider].eagerly(),
+      bind[FileSystemMetricsService].toSelf.eagerly(),
       individualDetailsConnectorBindings
-    ) ++ authTokenInitialiserBindings
+    ) ++ authTokenInitialiserBindings ++ workerBindings
   }
 }

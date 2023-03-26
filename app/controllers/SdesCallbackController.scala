@@ -16,6 +16,8 @@
 
 package controllers
 
+import com.codahale.metrics.{MetricRegistry, Timer}
+import com.kenshoo.play.metrics.Metrics
 import controllers.SdesCallbackController.SubmissionLockedException
 import models.dmsa.{SubmissionItem, SubmissionItemStatus}
 import models.sdes.{NotificationCallback, NotificationType}
@@ -28,6 +30,7 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendBaseController
 import java.time.{Clock, Duration}
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Success
 import scala.util.control.NoStackTrace
 
 @Singleton
@@ -37,10 +40,14 @@ class SdesCallbackController @Inject() (
                                          clock: Clock,
                                          configuration: Configuration,
                                          retryService: RetryService,
-                                         auditService: AuditService
+                                         auditService: AuditService,
+                                         metrics: Metrics
                                        )(implicit ec: ExecutionContext) extends BackendBaseController with Logging {
 
   private val lockTtl: Duration = Duration.ofSeconds(configuration.get[Int]("lock-ttl"))
+
+  private val metricRegistry: MetricRegistry = metrics.defaultRegistry
+  private val timer: Timer = metricRegistry.timer("supplementary-data.timer")
 
   def callback = Action.async(parse.json[NotificationCallback]) { implicit request =>
     logger.info(s"SDES Callback received for correlationId: ${request.body.correlationID}, with status: ${request.body.notification}")
@@ -52,8 +59,10 @@ class SdesCallbackController @Inject() (
             Future.failed(SubmissionLockedException(item.sdesCorrelationId))
           } else {
             getNewItemStatus(request.body.notification).map { newStatus =>
-              submissionItemRepository.update(item.id, newStatus, request.body.failureReason)
-                .map(_ => Ok)
+              withTimerForItem(item) {
+                submissionItemRepository.update(item.id, newStatus, request.body.failureReason)
+                  .map(_ => Ok)
+              }
             }.getOrElse {
               Future.successful(Ok)
             }.map { result =>
@@ -81,6 +90,15 @@ class SdesCallbackController @Inject() (
 
   private def isSubmissionLockedException(e: Throwable): Boolean =
     e.isInstanceOf[SubmissionLockedException]
+
+  private def withTimerForItem[A](item: SubmissionItem)(future: Future[A]): Future[A] = {
+    future.onComplete {
+      case Success(_) =>
+        timer.update(Duration.between(item.created, clock.instant()))
+      case _ => ()
+    }
+    future
+  }
 }
 
 object SdesCallbackController {

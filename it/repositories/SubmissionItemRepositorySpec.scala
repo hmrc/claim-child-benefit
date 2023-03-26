@@ -368,6 +368,32 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
     }
   }
 
+  "countByStatus" - {
+
+    "must return the number of items for that particular status" in {
+
+      val item1 = randomItem
+      val item2 = randomItem
+      val item3 = randomItem.copy(status = SubmissionItemStatus.Failed)
+      val item4 = randomItem.copy(status = SubmissionItemStatus.Forwarded)
+      val item5 = randomItem.copy(status = SubmissionItemStatus.Completed)
+
+      repository.countByStatus(SubmissionItemStatus.Submitted).futureValue mustEqual 0
+      repository.countByStatus(SubmissionItemStatus.Failed).futureValue mustEqual 0
+      repository.countByStatus(SubmissionItemStatus.Completed).futureValue mustEqual 0
+      repository.countByStatus(SubmissionItemStatus.Forwarded).futureValue mustEqual 0
+
+      List(item1, item2, item3, item4, item5)
+        .traverse(repository.insert)
+        .futureValue
+
+      repository.countByStatus(SubmissionItemStatus.Submitted).futureValue mustEqual 2
+      repository.countByStatus(SubmissionItemStatus.Failed).futureValue mustEqual 1
+      repository.countByStatus(SubmissionItemStatus.Completed).futureValue mustEqual 1
+      repository.countByStatus(SubmissionItemStatus.Forwarded).futureValue mustEqual 1
+    }
+  }
+
   private def randomItem: SubmissionItem = item.copy(
     id = UUID.randomUUID().toString,
     sdesCorrelationId = UUID.randomUUID().toString,

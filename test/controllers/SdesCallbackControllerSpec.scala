@@ -93,7 +93,8 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
 
     "must return OK when the status is updated to FileReady" in {
 
-      when(mockSubmissionItemRepository.getByCorrelationId(any())).thenReturn(Future.successful(Some(item)))
+      when(mockSubmissionItemRepository.getByCorrelationId(any()))
+        .thenReturn(Future.successful(Some(item)))
 
       val request = FakeRequest(routes.SdesCallbackController.callback)
         .withJsonBody(Json.toJson(requestBody.copy(notification = NotificationType.FileReady)))
@@ -158,8 +159,10 @@ class SdesCallbackControllerSpec extends AnyFreeSpec with Matchers with OptionVa
       val lockedItem = item.copy(lockedAt = Some(clock.instant()))
 
       when(mockSubmissionItemRepository.getByCorrelationId(any()))
-        .thenReturn(Future.successful(Some(lockedItem)))
-        .andThen(Future.successful(Some(item)))
+        .thenReturn(
+          Future.successful(Some(lockedItem)),
+          Future.successful(Some(item))
+        )
       when(mockSubmissionItemRepository.update(any(), any(), any())).thenReturn(Future.successful(item))
 
       val request = FakeRequest(routes.SdesCallbackController.callback)

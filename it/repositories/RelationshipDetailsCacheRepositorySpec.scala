@@ -16,20 +16,21 @@
 
 package repositories
 
-import config.AppConfig
-import models.{Done, Name, RelationshipDetails, RelationshipDetailsCacheItem, Relationships}
+import models.{Done, RelationshipDetails, RelationshipDetailsCacheItem, Relationships}
 import org.mockito.MockitoSugar
 import org.mongodb.scala.model.Filters
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import play.api.inject.bind
+import play.api.inject.guice.GuiceApplicationBuilder
+import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 import utils.NinoGenerator
 
 import java.time.temporal.ChronoUnit
 import java.time.{Clock, Instant, ZoneId}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class RelationshipDetailsCacheRepositorySpec
   extends AnyFreeSpec
@@ -43,18 +44,22 @@ class RelationshipDetailsCacheRepositorySpec
   private val instant = Instant.now.truncatedTo(ChronoUnit.MILLIS)
   private val stubClock: Clock = Clock.fixed(instant, ZoneId.systemDefault)
 
-  private val mockAppConfig = mock[AppConfig]
-  when(mockAppConfig.designatoryDetailsTtlInSeconds) thenReturn 1
+  private val app = GuiceApplicationBuilder()
+    .overrides(
+      bind[MongoComponent].toInstance(mongoComponent),
+      bind[Clock].toInstance(stubClock)
+    )
+    .configure(
+      "mongodb.relationshipDetailsTtlInSeconds" -> 1
+    )
+    .build()
 
-  protected override val repository = new RelationshipDetailsCacheRepository(
-    mongoComponent = mongoComponent,
-    appConfig = mockAppConfig,
-    clock = stubClock
-  )
+  protected override val repository: RelationshipDetailsCacheRepository =
+    app.injector.instanceOf[RelationshipDetailsCacheRepository]
 
   ".set" - {
 
-    "must save the item, setting the timestap to `now`" in {
+    "must save the item, setting the timestamp to `now`" in {
 
       val details = RelationshipDetails(Relationships(None))
       val nino = NinoGenerator.randomNino()
