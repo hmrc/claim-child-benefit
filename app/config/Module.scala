@@ -20,6 +20,7 @@ import cats.effect.unsafe.IORuntime
 import connectors.{DesIndividualDetailsConnector, IfIndividualDetailsConnector, IndividualDetailsConnector}
 import play.api.inject.Binding
 import play.api.{Configuration, Environment}
+import services.FileSystemMetricsService
 import uk.gov.hmrc.crypto.{Decrypter, Encrypter}
 import uk.gov.hmrc.mongo.metrix.MetricOrchestrator
 import workers.{MetricOrchestratorWorker, SdesNotificationWorker}
@@ -48,6 +49,7 @@ class Module extends play.api.inject.Module {
       bind[Encrypter with Decrypter].toProvider[CryptoProvider],
       bind[MetricOrchestrator].toProvider[MetricOrchestratorProvider].eagerly(),
       bind[MetricOrchestratorWorker].toSelf.eagerly(),
+      bind[FileSystemMetricsService].toSelf.eagerly(),
       individualDetailsConnectorBindings
     ) ++ authTokenInitialiserBindings
   }
