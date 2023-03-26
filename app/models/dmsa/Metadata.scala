@@ -16,7 +16,8 @@
 
 package models.dmsa
 
-import play.api.libs.json.{Format, Json, OFormat}
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 import uk.gov.hmrc.crypto.{Decrypter, Encrypter}
 import uk.gov.hmrc.crypto.Sensitive.SensitiveString
 import uk.gov.hmrc.crypto.json.JsonEncryption
@@ -49,4 +50,9 @@ object Metadata {
 
     Json.format
   }
+
+  val apiWrites: OWrites[Metadata] = (
+    (__ \ "submissionDate").write[Instant] and
+    ( __ \ "correlationId").write[String]
+  )(m => (m.submissionDate, m.correlationId))
 }

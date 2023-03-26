@@ -16,6 +16,7 @@
 
 package repositories
 
+import cats.implicits.toTraverseOps
 import models.dmsa._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
@@ -27,7 +28,7 @@ import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 import util.MutableClock
 
 import java.time.temporal.ChronoUnit
-import java.time.{Duration, Instant}
+import java.time.{Duration, Instant, LocalDate}
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
@@ -260,6 +261,110 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
       promise.failure(new RuntimeException())
       runningFuture.failed.futureValue
       repository.get(item.id).futureValue.value.lockedAt.value mustEqual clock.instant()
+    }
+  }
+
+  "dailySummaries" - {
+
+    "must return a summary for every day where there are records" in {
+
+      List(
+        randomItem.copy(status = SubmissionItemStatus.Completed, created = clock.instant()),
+        randomItem.copy(status = SubmissionItemStatus.Completed, created = clock.instant()),
+        randomItem.copy(status = SubmissionItemStatus.Failed, created = clock.instant()),
+        randomItem.copy(status = SubmissionItemStatus.Submitted, created = clock.instant()),
+        randomItem.copy(status = SubmissionItemStatus.Forwarded, created = clock.instant()),
+        randomItem.copy(status = SubmissionItemStatus.Completed, created = clock.instant().minus(Duration.ofDays(10)))
+      ).traverse(repository.insert)
+        .futureValue
+
+      val result = repository.dailySummaries.futureValue
+
+      result must contain theSameElementsAs List(
+        DailySummary(date = LocalDate.now(clock), submitted = 1, forwarded = 1, failed = 1, completed = 2),
+        DailySummary(date = LocalDate.now(clock).minusDays(10), submitted = 0, forwarded = 0, failed = 0, completed = 1)
+      )
+    }
+  }
+
+  "list" - {
+
+    "must return a list of submission summaries" in {
+
+      val item1 = item.copy(id = "id1", sdesCorrelationId = "correlationId1")
+      val item2 = item.copy(id = "id2", sdesCorrelationId = "correlationId2")
+
+      insert(item1).futureValue
+      insert(item2).futureValue
+
+      val result = repository.list().futureValue
+      result.summaries must contain theSameElementsAs Seq(SubmissionSummary(item1), SubmissionSummary(item2))
+      result.totalCount mustEqual 2
+    }
+
+    "must return a list of items filtered by status when status is supplied" in {
+
+      val item1 = item.copy(id = "id1", sdesCorrelationId = "correlationId1", status = SubmissionItemStatus.Failed)
+      val item2 = item.copy(id = "id2", sdesCorrelationId = "correlationId2")
+
+      List(item1, item2).traverse(insert).futureValue
+
+      val result = repository.list(status = Some(SubmissionItemStatus.Failed)).futureValue
+      result.summaries must contain only SubmissionSummary(item1)
+      result.totalCount mustEqual 1
+    }
+
+    "must return a list of items filtered by the day the item was created" in {
+
+      val item1 = item.copy(id = "id1", sdesCorrelationId = "correlationId1", created = clock.instant())
+      val item2 = item.copy(id = "id2", sdesCorrelationId = "correlationId2", created = clock.instant().minus(Duration.ofDays(1)))
+
+      List(item1, item2).traverse(insert).futureValue
+
+      val result = repository.list(created = Some(LocalDate.now(clock))).futureValue
+      result.summaries must contain only SubmissionSummary(item1)
+      result.totalCount mustEqual 1
+    }
+
+    "must apply all filters" in {
+
+      val item1 = randomItem.copy(created = clock.instant().minus(Duration.ofDays(2)), status = SubmissionItemStatus.Completed)
+
+      List(
+        item1,
+        randomItem.copy(created = clock.instant(), status = SubmissionItemStatus.Completed),
+        randomItem.copy(created = clock.instant().minus(Duration.ofDays(2)), status = SubmissionItemStatus.Forwarded),
+      ).traverse(insert).futureValue
+
+      val result = repository.list(created = Some(LocalDate.now(clock).minusDays(2)), status = Some(SubmissionItemStatus.Completed)).futureValue
+      result.summaries must contain only SubmissionSummary(item1)
+      result.totalCount mustEqual 1
+    }
+
+    "must limit the number of items to the supplied limit" in {
+
+      val item1 = randomItem.copy(created = clock.instant())
+      clock.advance(Duration.ofMinutes(1))
+      val item2 = randomItem.copy(created = clock.instant())
+
+      List(item1, item2).traverse(insert).futureValue
+
+      val result = repository.list(limit = 1).futureValue
+      result.summaries must contain only SubmissionSummary(item2)
+      result.totalCount mustEqual 2
+    }
+
+    "must return items offset by the offset" in {
+
+      val item1 = randomItem.copy(created = clock.instant())
+      clock.advance(Duration.ofMinutes(1))
+      val item2 = randomItem.copy(created = clock.instant())
+
+      List(item1, item2).traverse(insert).futureValue
+
+      val result = repository.list(limit = 1, offset = 1).futureValue
+      result.summaries must contain only SubmissionSummary(item1)
+      result.totalCount mustEqual 2
     }
   }
 

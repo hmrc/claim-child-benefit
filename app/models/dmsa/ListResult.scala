@@ -16,24 +16,19 @@
 
 package models.dmsa
 
-import play.api.libs.json.{Format, Json, OFormat}
-import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
+import play.api.libs.json.{Json, OFormat}
 
-import java.time.Instant
+final case class ListResult (
+                              totalCount: Int,
+                              summaries: Seq[SubmissionSummary]
+                            )
 
-final case class ObjectSummary(
-                                location: String,
-                                contentLength: Long,
-                                contentMd5: String,
-                                lastModified: Instant
-                              )
+object ListResult {
 
-object ObjectSummary {
+  implicit lazy val format: OFormat[ListResult] = Json.format
 
-  implicit lazy val format: OFormat[ObjectSummary] = {
-    implicit val instantFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
+  lazy val apiFormat: OFormat[ListResult] = {
+    implicit lazy val submissionSummaryFormat: OFormat[SubmissionSummary] = SubmissionSummary.apiFormat
     Json.format
   }
-
-  val apiFormat: OFormat[ObjectSummary] = Json.format
 }

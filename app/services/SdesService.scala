@@ -19,12 +19,11 @@ package services
 import connectors.SdesConnector
 import models.Done
 import models.dmsa.{QueryResult, SubmissionItem, SubmissionItemStatus}
-import models.sdes.{FileAudit, FileChecksum, FileMetadata, FileNotifyRequest, FileProperty}
+import models.sdes._
 import play.api.Configuration
 import repositories.SubmissionItemRepository
 import uk.gov.hmrc.http.HeaderCarrier
 
-import java.time.{LocalDateTime, ZoneOffset}
 import java.time.format.DateTimeFormatter
 import java.util.Base64
 import javax.inject.{Inject, Singleton}

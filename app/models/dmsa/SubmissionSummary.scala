@@ -21,19 +21,29 @@ import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import java.time.Instant
 
-final case class ObjectSummary(
-                                location: String,
-                                contentLength: Long,
-                                contentMd5: String,
-                                lastModified: Instant
-                              )
+final case class SubmissionSummary(
+                                    id: String,
+                                    status: SubmissionItemStatus,
+                                    failureReason: Option[String],
+                                    lastUpdated: Instant
+                                  )
 
-object ObjectSummary {
+object SubmissionSummary {
 
-  implicit lazy val format: OFormat[ObjectSummary] = {
+  def apply(submissionItem: SubmissionItem): SubmissionSummary =
+    SubmissionSummary(
+      id = submissionItem.id,
+      status = submissionItem.status,
+      failureReason = submissionItem.failureReason,
+      lastUpdated = submissionItem.lastUpdated
+    )
+
+  implicit lazy val format: OFormat[SubmissionSummary] = {
     implicit val instantFormat: Format[Instant] = MongoJavatimeFormats.instantFormat
     Json.format
   }
 
-  val apiFormat: OFormat[ObjectSummary] = Json.format
+
+  lazy val apiFormat: OFormat[SubmissionSummary] =
+    Json.format
 }
