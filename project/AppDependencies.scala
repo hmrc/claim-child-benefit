@@ -24,7 +24,7 @@ object AppDependencies {
   val test = Seq(
     "uk.gov.hmrc"             %% "bootstrap-test-play-28"     % bootstrapVersion,
     "uk.gov.hmrc.mongo"       %% "hmrc-mongo-test-play-28"    % hmrcMongoVersion,
-    "org.mockito"             %% "mockito-scala"              % "1.16.42",
+    "org.mockito"             %% "mockito-scala"              % "1.17.12",
     "org.scalacheck"          %% "scalacheck"                 % "1.14.1",
     "com.github.tomakehurst"  %  "wiremock-standalone"        % "2.27.2",
     "org.scalatestplus"       %% "scalacheck-1-15"            % "3.2.10.0"
