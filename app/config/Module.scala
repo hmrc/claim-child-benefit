@@ -22,7 +22,7 @@ import play.api.inject.Binding
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.crypto.{Decrypter, Encrypter}
 import uk.gov.hmrc.mongo.metrix.MetricOrchestrator
-import workers.SdesNotificationWorker
+import workers.{MetricOrchestratorWorker, SdesNotificationWorker}
 
 import java.time.Clock
 
@@ -47,6 +47,7 @@ class Module extends play.api.inject.Module {
       bind[SdesNotificationWorker].toSelf.eagerly(),
       bind[Encrypter with Decrypter].toProvider[CryptoProvider],
       bind[MetricOrchestrator].toProvider[MetricOrchestratorProvider].eagerly(),
+      bind[MetricOrchestratorWorker].toSelf.eagerly(),
       individualDetailsConnectorBindings
     ) ++ authTokenInitialiserBindings
   }
