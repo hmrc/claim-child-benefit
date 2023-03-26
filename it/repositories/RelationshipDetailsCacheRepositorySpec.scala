@@ -44,7 +44,7 @@ class RelationshipDetailsCacheRepositorySpec
   private val stubClock: Clock = Clock.fixed(instant, ZoneId.systemDefault)
 
   private val mockAppConfig = mock[AppConfig]
-  when(mockAppConfig.designatoryDetailsTtlInSeconds) thenReturn 1
+  when(mockAppConfig.relationshipDetailsTtlInSeconds) thenReturn 1
 
   protected override val repository = new RelationshipDetailsCacheRepository(
     mongoComponent = mongoComponent,
@@ -54,7 +54,7 @@ class RelationshipDetailsCacheRepositorySpec
 
   ".set" - {
 
-    "must save the item, setting the timestap to `now`" in {
+    "must save the item, setting the timestamp to `now`" in {
 
       val details = RelationshipDetails(Relationships(None))
       val nino = NinoGenerator.randomNino()

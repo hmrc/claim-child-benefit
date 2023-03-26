@@ -47,7 +47,7 @@ class SdesCallbackController @Inject() (
   private val lockTtl: Duration = Duration.ofSeconds(configuration.get[Int]("lock-ttl"))
 
   private val metricRegistry: MetricRegistry = metrics.defaultRegistry
-  private val timer: Timer = metricRegistry.timer("submission.timer")
+  private val timer: Timer = metricRegistry.timer("supplementary-data.timer")
 
   def callback = Action.async(parse.json[NotificationCallback]) { implicit request =>
     logger.info(s"SDES Callback received for correlationId: ${request.body.correlationID}, with status: ${request.body.notification}")
@@ -58,16 +58,16 @@ class SdesCallbackController @Inject() (
             logger.warn(s"correlationId: ${request.body.correlationID} was locked!")
             Future.failed(SubmissionLockedException(item.sdesCorrelationId))
           } else {
-            withTimerForItem(item) {
-              getNewItemStatus(request.body.notification).map { newStatus =>
+            getNewItemStatus(request.body.notification).map { newStatus =>
+              withTimerForItem(item) {
                 submissionItemRepository.update(item.id, newStatus, request.body.failureReason)
                   .map(_ => Ok)
-              }.getOrElse {
-                Future.successful(Ok)
-              }.map { result =>
-                auditService.auditSupplementaryDataResult(request.body, item)
-                result
               }
+            }.getOrElse {
+              Future.successful(Ok)
+            }.map { result =>
+              auditService.auditSupplementaryDataResult(request.body, item)
+              result
             }
           }
         }.getOrElse {
