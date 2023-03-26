@@ -41,16 +41,22 @@ class Module extends play.api.inject.Module {
         bind[IndividualDetailsConnector].to[IfIndividualDetailsConnector].eagerly()
       } else bind[IndividualDetailsConnector].to[DesIndividualDetailsConnector].eagerly()
 
+    val workerBindings: Seq[Binding[_]] =
+      if (configuration.get[Boolean]("workers.enabled")) {
+        Seq(
+          bind[SdesNotificationWorker].toSelf.eagerly(),
+          bind[MetricOrchestratorWorker].toSelf.eagerly()
+        )
+      } else Seq.empty
+
     Seq(
       bind[AppConfig].toSelf.eagerly(),
       bind[Clock].toInstance(Clock.systemUTC()),
       bind[IORuntime].toProvider[IORuntimeProvider],
-      bind[SdesNotificationWorker].toSelf.eagerly(),
       bind[Encrypter with Decrypter].toProvider[CryptoProvider],
       bind[MetricOrchestrator].toProvider[MetricOrchestratorProvider].eagerly(),
-      bind[MetricOrchestratorWorker].toSelf.eagerly(),
       bind[FileSystemMetricsService].toSelf.eagerly(),
       individualDetailsConnectorBindings
-    ) ++ authTokenInitialiserBindings
+    ) ++ authTokenInitialiserBindings ++ workerBindings
   }
 }

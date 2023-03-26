@@ -63,6 +63,7 @@ class SupplementaryDataSubmissionSpec extends AnyFreeSpec with Matchers with Def
     )
     .configure(
       "internal-auth.token" -> claimChildBenefitAuthToken,
+      "workers.enabled" -> true,
       "workers.initial-delay" -> "0 seconds",
       "workers.sdes-notification-worker.interval" -> "1 second",
     )
