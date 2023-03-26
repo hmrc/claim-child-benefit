@@ -20,6 +20,7 @@ import models.CheckLimitResponse
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import repositories.ThrottleRepository
+import uk.gov.hmrc.internalauth.client.{BackendAuthComponents, IAAction, Predicate, Resource, ResourceLocation, ResourceType}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.Inject
@@ -27,21 +28,31 @@ import scala.concurrent.ExecutionContext
 
 class ThrottleController @Inject()(
                                     cc: ControllerComponents,
-                                    repository: ThrottleRepository
+                                    repository: ThrottleRepository,
+                                    auth: BackendAuthComponents
                                   )(implicit ec: ExecutionContext) extends BackendController(cc) {
 
-  def checkLimit: Action[AnyContent] = Action.async {
-    implicit request =>
-      repository
-        .get
-        .map(data => CheckLimitResponse(data.limitReached))
-        .map(r => Ok(Json.toJson(r)))
+  private def permission(action: IAAction) = Predicate.Permission(
+    resource = Resource(
+      resourceType = ResourceType("claim-child-benefit"),
+      resourceLocation = ResourceLocation("throttle")
+    ),
+    action = action
+  )
+
+  private def authorised(action: IAAction) =
+    auth.authorizedAction(permission(action))
+
+  def checkLimit: Action[AnyContent] = authorised(IAAction("READ")).async {
+    repository
+      .get
+      .map(data => CheckLimitResponse(data.limitReached))
+      .map(r => Ok(Json.toJson(r)))
   }
 
-  def incrementCount: Action[AnyContent] = Action.async {
-    implicit request =>
-      repository
-        .incrementCount
-        .map(_ => Ok)
+  def incrementCount: Action[AnyContent] = authorised(IAAction("WRITE")).async {
+    repository
+      .incrementCount
+      .map(_ => Ok)
   }
 }
