@@ -393,7 +393,7 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
       repository.countByStatus(SubmissionItemStatus.Forwarded).futureValue mustEqual 1
     }
   }
-  
+
   private def randomItem: SubmissionItem = item.copy(
     id = UUID.randomUUID().toString,
     sdesCorrelationId = UUID.randomUUID().toString,
