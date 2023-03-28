@@ -18,7 +18,6 @@ package services
 
 import connectors.SdesConnector
 import models.Done
-import models.audit.SupplementaryDataSubmittedEvent
 import models.dmsa._
 import models.sdes._
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
@@ -27,14 +26,13 @@ import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
-import play.api.{Configuration, Environment}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.{Configuration, Environment}
 import repositories.SubmissionItemRepository
 import uk.gov.hmrc.crypto.{Decrypter, Encrypter, SymmetricCryptoFactory}
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
-import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.time.{Clock, Instant, LocalDateTime, ZoneOffset}
 import java.util.UUID

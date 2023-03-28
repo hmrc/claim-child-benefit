@@ -19,23 +19,26 @@ package services
 import connectors.IndividualDetailsConnector
 import logging.Logging
 import models.{Address, DesignatoryDetails, Name}
+import play.api.http.Status.BAD_GATEWAY
 import repositories.DesignatoryDetailsCacheRepository
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
 import javax.inject.{Inject, Singleton}
+import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class DesignatoryDetailsService @Inject() (
                                             connector: IndividualDetailsConnector,
-                                            cache: DesignatoryDetailsCacheRepository
+                                            cache: DesignatoryDetailsCacheRepository,
+                                            retryService: RetryService
                                           )(implicit ec: ExecutionContext) extends Logging {
 
-  def getDesignatoryDetails(nino: String)(implicit hc: HeaderCarrier): Future[DesignatoryDetails] = {
+  def getDesignatoryDetails(nino: String)(implicit hc: HeaderCarrier): Future[DesignatoryDetails] =
     cache.get(nino).flatMap {
       _.map(Future.successful)
         .getOrElse {
-          connector.getDesignatoryDetails(nino).flatMap { result =>
+          getDetails(nino).flatMap { result =>
 
             val realName = result.names
               .filter(n => n.nameType == 1 && n.nameEndDate.isEmpty)
@@ -75,5 +78,19 @@ class DesignatoryDetailsService @Inject() (
           }
         }
     }
-  }
+
+  private def getDetails(nino: String)(implicit hc: HeaderCarrier): Future[models.integration.DesignatoryDetails] =
+    retryService.retry(
+      connector.getDesignatoryDetails(nino),
+      delay = 1.second,
+      backoff = RetryService.BackoffStrategy.exponential,
+      maxAttempts = 3,
+      retriable = isBadGatewayError
+    )
+
+  private def isBadGatewayError(e: Throwable): Boolean =
+    e match {
+      case e: UpstreamErrorResponse => e.statusCode == BAD_GATEWAY
+      case _                        => false
+    }
 }
