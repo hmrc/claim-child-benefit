@@ -19,7 +19,7 @@ package services
 import connectors.IndividualDetailsConnector
 import logging.Logging
 import models.{Address, DesignatoryDetails, Name}
-import play.api.http.Status.BAD_GATEWAY
+import play.api.http.Status.{BAD_GATEWAY, GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE}
 import repositories.DesignatoryDetailsCacheRepository
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
@@ -85,12 +85,14 @@ class DesignatoryDetailsService @Inject() (
       delay = 1.second,
       backoff = RetryService.BackoffStrategy.exponential,
       maxAttempts = 3,
-      retriable = isBadGatewayError
+      retriable = shouldRetry
     )
 
-  private def isBadGatewayError(e: Throwable): Boolean =
+  private val retriableStatusCodes: Set[Int] = Set(BAD_GATEWAY, SERVICE_UNAVAILABLE , GATEWAY_TIMEOUT)
+
+  private def shouldRetry(e: Throwable): Boolean =
     e match {
-      case e: UpstreamErrorResponse => e.statusCode == BAD_GATEWAY
+      case e: UpstreamErrorResponse => retriableStatusCodes.contains(e.statusCode)
       case _                        => false
     }
 }
