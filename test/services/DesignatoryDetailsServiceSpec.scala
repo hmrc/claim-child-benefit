@@ -24,6 +24,7 @@ import org.mockito.MockitoSugar
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import play.api.http.Status.{BAD_GATEWAY, GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import repositories.DesignatoryDetailsCacheRepository
@@ -198,7 +199,7 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
     )
   }
 
-  private val badGatewayError = UpstreamErrorResponse("Upstream error", 502, 500, Map.empty)
+  private def upstreamErrorResponse(status: Int) = UpstreamErrorResponse("Upstream error", status, 500, Map.empty)
 
   "getDesignatoryDetails" - {
 
@@ -246,14 +247,48 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
       }
     }
 
-    "must retry the call when the IfConnector call fails with an Upstream5xxResponse" in {
+    "must retry the call when the IfConnector call fails with a bad gateway error" in {
 
       implicit val hc: HeaderCarrier = HeaderCarrier()
       val nino = NinoGenerator.randomNino()
 
       when(mockIndividualDetailsConnector.getDesignatoryDetails(any(), any())(any()))
         .thenReturn(
-          Future.failed(badGatewayError),
+          Future.failed(upstreamErrorResponse(BAD_GATEWAY)),
+          Future.successful(individualDetailsResponse)
+        )
+      when(mockRepository.set(any(), any())).thenReturn(Future.successful(Done))
+      when(mockRepository.get(any())).thenReturn(Future.successful(None))
+
+      service.getDesignatoryDetails(nino).futureValue mustEqual expectedResponse
+      verify(mockRepository, times(1)).get(eqTo(nino))
+    }
+
+    "must retry the call when the IfConnector call fails with a service unavailable error" in {
+
+      implicit val hc: HeaderCarrier = HeaderCarrier()
+      val nino = NinoGenerator.randomNino()
+
+      when(mockIndividualDetailsConnector.getDesignatoryDetails(any(), any())(any()))
+        .thenReturn(
+          Future.failed(upstreamErrorResponse(SERVICE_UNAVAILABLE)),
+          Future.successful(individualDetailsResponse)
+        )
+      when(mockRepository.set(any(), any())).thenReturn(Future.successful(Done))
+      when(mockRepository.get(any())).thenReturn(Future.successful(None))
+
+      service.getDesignatoryDetails(nino).futureValue mustEqual expectedResponse
+      verify(mockRepository, times(1)).get(eqTo(nino))
+    }
+
+    "must retry the call when the IfConnector call fails with a gateway timeout error" in {
+
+      implicit val hc: HeaderCarrier = HeaderCarrier()
+      val nino = NinoGenerator.randomNino()
+
+      when(mockIndividualDetailsConnector.getDesignatoryDetails(any(), any())(any()))
+        .thenReturn(
+          Future.failed(upstreamErrorResponse(GATEWAY_TIMEOUT)),
           Future.successful(individualDetailsResponse)
         )
       when(mockRepository.set(any(), any())).thenReturn(Future.successful(Done))
@@ -270,9 +305,9 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
 
       when(mockIndividualDetailsConnector.getDesignatoryDetails(any(), any())(any()))
         .thenReturn(
-          Future.failed(badGatewayError),
-          Future.failed(badGatewayError),
-          Future.failed(badGatewayError),
+          Future.failed(upstreamErrorResponse(BAD_GATEWAY)),
+          Future.failed(upstreamErrorResponse(SERVICE_UNAVAILABLE)),
+          Future.failed(upstreamErrorResponse(GATEWAY_TIMEOUT)),
           Future.successful(individualDetailsResponse)
         )
       when(mockRepository.get(any())).thenReturn(Future.successful(None))
@@ -280,19 +315,7 @@ class DesignatoryDetailsServiceSpec extends AnyFreeSpec with Matchers with Mocki
       service.getDesignatoryDetails(nino).failed.futureValue
     }
 
-    "must fail when the IfConnector call fails with an upstream bad gateway error" in {
-
-      implicit val hc: HeaderCarrier = HeaderCarrier()
-      val nino = NinoGenerator.randomNino()
-
-      when(mockIndividualDetailsConnector.getDesignatoryDetails(any(), any())(any()))
-        .thenReturn(Future.failed(badGatewayError))
-      when(mockRepository.get(any())).thenReturn(Future.successful(None))
-
-      service.getDesignatoryDetails(nino).failed.futureValue
-    }
-
-    "must fail when the IfConnector call fails with an upstream exception which isn't 502" in {
+    "must fail when the IfConnector call fails with an upstream exception which isn't 502/503/504" in {
 
       implicit val hc: HeaderCarrier = HeaderCarrier()
       val nino = NinoGenerator.randomNino()
