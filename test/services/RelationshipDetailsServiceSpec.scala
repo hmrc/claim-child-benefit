@@ -22,17 +22,19 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchersSugar.eqTo
 import org.mockito.{Mockito, MockitoSugar}
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import play.api.http.Status.{BAD_GATEWAY, GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE}
+import play.api.inject.bind
+import play.api.inject.guice.GuiceApplicationBuilder
 import repositories.RelationshipDetailsCacheRepository
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 import utils.NinoGenerator
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class RelationshipDetailsServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFutures with BeforeAndAfterEach {
+class RelationshipDetailsServiceSpec extends AnyFreeSpec with Matchers with MockitoSugar with ScalaFutures with IntegrationPatience with BeforeAndAfterEach {
 
   private val mockConnector = mock[RelationshipDetailsConnector]
   private val mockRepository = mock[RelationshipDetailsCacheRepository]
@@ -43,7 +45,13 @@ class RelationshipDetailsServiceSpec extends AnyFreeSpec with Matchers with Mock
     super.beforeEach()
   }
 
-  private val service = new RelationshipDetailsService(mockConnector, mockRepository)
+  private lazy val app = GuiceApplicationBuilder()
+    .overrides(
+      bind[RelationshipDetailsConnector].toInstance(mockConnector),
+      bind[RelationshipDetailsCacheRepository].toInstance(mockRepository)
+    )
+
+  private lazy val service = app.injector.instanceOf[RelationshipDetailsService]
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
   private val nino = NinoGenerator.randomNino()
@@ -55,6 +63,8 @@ class RelationshipDetailsServiceSpec extends AnyFreeSpec with Matchers with Mock
         Relationship(RelationshipType.AdultDerived, RelationshipSource.TFC)
       )))
     )
+
+  private def upstreamErrorResponse(status: Int) = UpstreamErrorResponse("Upstream error", status, 500, Map.empty)
 
   "getRelationshipDetails" - {
 
@@ -82,10 +92,81 @@ class RelationshipDetailsServiceSpec extends AnyFreeSpec with Matchers with Mock
         verify(mockRepository, times(1)).set(eqTo(nino), eqTo(relationshipDetailsResponse))
       }
 
-      "must fail if the connector call fails" in {
+      "must retry the call when the connector call fails with a bad gateway error" in {
 
+        when(mockConnector.getRelationships(any(), any())(any()))
+          .thenReturn(
+            Future.failed(upstreamErrorResponse(BAD_GATEWAY)),
+            Future.successful(relationshipDetailsResponse)
+          )
         when(mockRepository.get(any())) thenReturn Future.successful(None)
-        when(mockConnector.getRelationships(any(), any())(any())) thenReturn Future.failed(new RuntimeException("foo"))
+        when(mockRepository.set(any(), any())) thenReturn Future.successful(Done)
+
+        service.getRelationshipDetails(nino).futureValue mustEqual relationshipDetailsResponse
+      }
+
+      "must retry the call when the connector call fails with a service unavailable error" in {
+
+        when(mockConnector.getRelationships(any(), any())(any()))
+          .thenReturn(
+            Future.failed(upstreamErrorResponse(SERVICE_UNAVAILABLE)),
+            Future.successful(relationshipDetailsResponse)
+          )
+        when(mockRepository.get(any())) thenReturn Future.successful(None)
+        when(mockRepository.set(any(), any())) thenReturn Future.successful(Done)
+
+        service.getRelationshipDetails(nino).futureValue mustEqual relationshipDetailsResponse
+      }
+
+      "must retry the call when the connector call fails with a gateway timeout error" in {
+
+        when(mockConnector.getRelationships(any(), any())(any()))
+          .thenReturn(
+            Future.failed(upstreamErrorResponse(GATEWAY_TIMEOUT)),
+            Future.successful(relationshipDetailsResponse)
+          )
+        when(mockRepository.get(any())) thenReturn Future.successful(None)
+        when(mockRepository.set(any(), any())) thenReturn Future.successful(Done)
+
+        service.getRelationshipDetails(nino).futureValue mustEqual relationshipDetailsResponse
+      }
+
+      "must fail when the connector call fails 3 times" in {
+
+        when(mockConnector.getRelationships(any(), any())(any()))
+          .thenReturn(
+            Future.failed(upstreamErrorResponse(GATEWAY_TIMEOUT)),
+            Future.failed(upstreamErrorResponse(SERVICE_UNAVAILABLE)),
+            Future.failed(upstreamErrorResponse(GATEWAY_TIMEOUT)),
+            Future.successful(relationshipDetailsResponse)
+          )
+        when(mockRepository.get(any())) thenReturn Future.successful(None)
+
+        service.getRelationshipDetails(nino).failed.futureValue
+      }
+
+      "must fail when the connector call fails with an upstream exception which isn't 502/503/504" in {
+
+        val upstreamError = UpstreamErrorResponse("Upstream error", 500, 500, Map.empty)
+
+        when(mockConnector.getRelationships(any(), any())(any()))
+          .thenReturn(
+            Future.failed(upstreamError),
+            Future.successful(relationshipDetailsResponse)
+          )
+        when(mockRepository.get(any())) thenReturn Future.successful(None)
+
+        service.getRelationshipDetails(nino).failed.futureValue
+      }
+
+      "must fail when the connector call fails when another exception type" in {
+
+        when(mockConnector.getRelationships(any(), any())(any()))
+          .thenReturn(
+            Future.failed(new RuntimeException()),
+            Future.successful(relationshipDetailsResponse)
+          )
+        when(mockRepository.get(any())) thenReturn Future.successful(None)
 
         service.getRelationshipDetails(nino).failed.futureValue
       }
