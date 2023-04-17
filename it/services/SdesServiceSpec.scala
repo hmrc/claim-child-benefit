@@ -31,7 +31,9 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.{Configuration, Environment}
 import repositories.SubmissionItemRepository
 import uk.gov.hmrc.crypto.{Decrypter, Encrypter, SymmetricCryptoFactory}
+import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
+import utils.NinoGenerator
 
 import java.time.temporal.ChronoUnit
 import java.time.{Clock, Instant, LocalDateTime, ZoneOffset}
@@ -78,6 +80,8 @@ class SdesServiceSpec extends AnyFreeSpec with Matchers
     )
     .build()
 
+  private val nino: Nino = Nino(NinoGenerator.randomNino())
+
   private val service = app.injector.instanceOf[SdesService]
 
   private def randomItem = {
@@ -91,7 +95,7 @@ class SdesServiceSpec extends AnyFreeSpec with Matchers
         contentMd5 = "hash",
         lastModified = clock.instant().minus(2, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MILLIS)
       ),
-      metadata = Metadata("foobar", clock.instant(), correlationId),
+      metadata = Metadata(nino.value, clock.instant(), correlationId),
       failureReason = None,
       created = clock.instant().minus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MILLIS),
       lastUpdated = clock.instant().minus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MILLIS),
@@ -129,7 +133,7 @@ class SdesServiceSpec extends AnyFreeSpec with Matchers
           checksum = FileChecksum("md5", value = "85ab21"),
           size = 1337,
           properties = List(
-            FileProperty("nino", "foobar"),
+            FileProperty("nino", nino.withoutSuffix),
             FileProperty("mimeType", "application/pdf"),
             FileProperty("submissionDate", "2022-03-15T12:30:45Z"),
             FileProperty("correlationId", "correlationId")
