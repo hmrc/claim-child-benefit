@@ -22,6 +22,7 @@ import models.dmsa.{QueryResult, SubmissionItem, SubmissionItemStatus}
 import models.sdes._
 import play.api.Configuration
 import repositories.SubmissionItemRepository
+import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.format.DateTimeFormatter
@@ -78,7 +79,7 @@ class SdesService @Inject() (
         checksum = FileChecksum("md5", base64ToHex(item.objectSummary.contentMd5)),
         size = item.objectSummary.contentLength,
         properties = List(
-          FileProperty("nino", item.metadata.nino.decryptedValue),
+          FileProperty("nino", Nino(item.metadata.nino.decryptedValue).withoutSuffix),
           FileProperty("mimeType", "application/pdf"),
           FileProperty("submissionDate", submissionDate),
           FileProperty("correlationId", item.metadata.correlationId)
