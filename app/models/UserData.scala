@@ -39,7 +39,7 @@ object UserData {
     (
       (__ \ "_id").read[String] and
       (__ \ "data").read[JsObject] and
-      (__ \ "lastUpdated").read(MongoJavatimeFormats.instantFormat)
+      (__ \ "lastUpdated").read[Instant]
     ) (UserData.apply _)
   }
 
@@ -50,7 +50,7 @@ object UserData {
     (
       (__ \ "_id").write[String] and
       (__ \ "data").write[JsObject] and
-      (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
+      (__ \ "lastUpdated").write[Instant]
     ) (unlift(UserData.unapply))
   }
 
