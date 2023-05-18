@@ -16,7 +16,7 @@
 
 package controllers
 
-import models.{Done, RecentClaim}
+import models.{Done, RecentClaim, TaxChargeChoice}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchersSugar.eqTo
 import org.mockito.{Mockito, MockitoSugar}
@@ -50,7 +50,7 @@ class RecentClaimControllerSpec extends AnyFreeSpec
 
   private val nino        = NinoGenerator.randomNino()
   private val instant     = Instant.now.truncatedTo(ChronoUnit.MILLIS)
-  private val recentClaim = RecentClaim(nino, instant)
+  private val recentClaim = RecentClaim(nino, instant, TaxChargeChoice.OptedOut)
 
   override def beforeEach(): Unit = {
     Mockito.reset(mockRepo)

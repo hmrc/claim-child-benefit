@@ -22,22 +22,35 @@ import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import java.time.Instant
 
-final case class RecentClaim(nino: String, created: Instant)
+final case class RecentClaim(
+                              nino: String,
+                              created: Instant,
+                              taxChargeChoice: TaxChargeChoice
+                            )
 
 object RecentClaim {
 
-  lazy implicit val format: OFormat[RecentClaim] = Json.format
+  implicit lazy val reads: Reads[RecentClaim] =
+    (
+      (__ \ "nino").read[String] and
+      (__ \ "created").read[Instant] and
+      (__ \ "taxChargeChoice").read[TaxChargeChoice].orElse(Reads.pure(TaxChargeChoice.NotRecorded))
+    )(RecentClaim.apply _)
+
+  implicit lazy val writes: OWrites[RecentClaim] = Json.writes
 
   val mongoReads: Reads[RecentClaim] =
     (
       (__ \ "nino").read[String] and
-      (__ \ "created").read(MongoJavatimeFormats.instantFormat)
+      (__ \ "created").read(MongoJavatimeFormats.instantFormat) and
+      (__ \ "taxChargeChoice").read[TaxChargeChoice].orElse(Reads.pure(TaxChargeChoice.NotRecorded))
     )(RecentClaim.apply _)
 
   val mongoWrites: OWrites[RecentClaim] =
     (
       (__ \ "nino").write[String] and
-      (__ \ "created").write(MongoJavatimeFormats.instantFormat)
+      (__ \ "created").write(MongoJavatimeFormats.instantFormat) and
+      (__ \ "taxChargeChoice").write[TaxChargeChoice]
     )(unlift(RecentClaim.unapply))
 
   val mongoFormat: OFormat[RecentClaim] = OFormat(mongoReads, mongoWrites)
