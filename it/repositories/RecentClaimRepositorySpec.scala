@@ -17,7 +17,7 @@
 package repositories
 
 import config.AppConfig
-import models.RecentClaim
+import models.{RecentClaim, TaxChargeChoice}
 import org.mockito.MockitoSugar
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
@@ -46,7 +46,7 @@ class RecentClaimRepositorySpec
 
   private val nino = NinoGenerator.randomNino()
   private val instant = Instant.now().truncatedTo(ChronoUnit.MILLIS)
-  private val recentClaim = RecentClaim(nino, instant)
+  private val recentClaim = RecentClaim(nino, instant, TaxChargeChoice.OptedOut)
 
   ".get" - {
 
