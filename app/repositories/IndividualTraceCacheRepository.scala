@@ -17,7 +17,7 @@
 package repositories
 
 import config.AppConfig
-import models.{CrnTraceCacheItem, CrnTraceRequest, Done}
+import models.{IndividualTraceCacheItem, IndividualTraceRequest, Done}
 import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes, ReplaceOptions}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
@@ -28,15 +28,15 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class CrnTraceCacheRepository @Inject()(
+class IndividualTraceCacheRepository @Inject()(
                                          mongoComponent: MongoComponent,
                                          appConfig: AppConfig,
                                          clock: Clock
                                        )(implicit ec: ExecutionContext)
-  extends PlayMongoRepository[CrnTraceCacheItem](
-    collectionName = "crn-traces",
+  extends PlayMongoRepository[IndividualTraceCacheItem](
+    collectionName = "individual-traces",
     mongoComponent = mongoComponent,
-    domainFormat   = CrnTraceCacheItem.format,
+    domainFormat   = IndividualTraceCacheItem.format,
     indexes        = Seq(
       IndexModel(
         Indexes.ascending("forename", "surname", "dateOfBirth"),
@@ -48,21 +48,21 @@ class CrnTraceCacheRepository @Inject()(
         Indexes.ascending("timestamp"),
         IndexOptions()
           .name("timestampIdx")
-          .expireAfter(appConfig.crnTraceTtlInSeconds, TimeUnit.SECONDS)
+          .expireAfter(appConfig.individualTraceTtlInSeconds, TimeUnit.SECONDS)
       )
     )
   ) {
 
-  private def byRequest(request: CrnTraceRequest) =
+  private def byRequest(request: IndividualTraceRequest) =
     Filters.and(
       Filters.equal("forename", request.forename),
       Filters.equal("surname", request.surname),
       Filters.equal("dateOfBirth", request.dateOfBirth)
     )
 
-  def set(request: CrnTraceRequest, exists: Boolean): Future[Done] = {
+  def set(request: IndividualTraceRequest, exists: Boolean): Future[Done] = {
 
-    val cacheItem = CrnTraceCacheItem(
+    val cacheItem = IndividualTraceCacheItem(
       forename = request.forename,
       surname = request.surname,
       dateOfBirth = request.dateOfBirth,
@@ -77,7 +77,7 @@ class CrnTraceCacheRepository @Inject()(
     ).toFuture.map(_ => Done)
   }
 
-  def get(request: CrnTraceRequest): Future[Option[CrnTraceCacheItem]] =
+  def get(request: IndividualTraceRequest): Future[Option[IndividualTraceCacheItem]] =
     collection.find(byRequest(request))
     .headOption
 }

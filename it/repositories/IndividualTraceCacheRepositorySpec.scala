@@ -16,9 +16,8 @@
 
 package repositories
 
-import models.{CrnTraceCacheItem, CrnTraceRequest, Done, RelationshipDetails, RelationshipDetailsCacheItem, Relationships}
+import models.{IndividualTraceCacheItem, IndividualTraceRequest}
 import org.mockito.MockitoSugar
-import org.mongodb.scala.model.Filters
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
@@ -27,15 +26,14 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
-import utils.NinoGenerator
 
 import java.time.temporal.ChronoUnit
 import java.time.{Clock, Instant, LocalDate, ZoneId}
 
-class CrnTraceCacheRepositorySpec
+class IndividualTraceCacheRepositorySpec
   extends AnyFreeSpec
     with Matchers
-    with DefaultPlayMongoRepositorySupport[CrnTraceCacheItem]
+    with DefaultPlayMongoRepositorySupport[IndividualTraceCacheItem]
     with ScalaFutures
     with IntegrationPatience
     with OptionValues
@@ -50,21 +48,21 @@ class CrnTraceCacheRepositorySpec
       bind[Clock].toInstance(stubClock)
     )
     .configure(
-      "mongodb.crnTraceTtlInSeconds" -> 1
+      "mongodb.individualTraceTtlInSeconds" -> 1
     )
     .build()
 
-  protected override val repository: CrnTraceCacheRepository =
-    app.injector.instanceOf[CrnTraceCacheRepository]
+  protected override val repository: IndividualTraceCacheRepository =
+    app.injector.instanceOf[IndividualTraceCacheRepository]
 
   ".set" - {
 
     "must save the request and result, setting the timestamp to `now`" in {
 
       val dateOfBirth = LocalDate.of(2000, 1, 2)
-      val request = CrnTraceRequest("first", "last", dateOfBirth)
+      val request = IndividualTraceRequest("first", "last", dateOfBirth)
       val exists = true
-      val expectedItem = CrnTraceCacheItem("first", "last", dateOfBirth, exists, instant)
+      val expectedItem = IndividualTraceCacheItem("first", "last", dateOfBirth, exists, instant)
 
       repository.set(request, exists).futureValue
       val insertedRecord = findAll().futureValue.head
@@ -81,12 +79,12 @@ class CrnTraceCacheRepositorySpec
 
         val dateOfBirth1 = LocalDate.of(2000, 1, 2)
         val dateOfBirth2 = LocalDate.of(2000, 1, 3)
-        val request = CrnTraceRequest("first", "last", dateOfBirth1)
+        val request = IndividualTraceRequest("first", "last", dateOfBirth1)
         val exists = true
-        val item1 = CrnTraceCacheItem("first", "last", dateOfBirth1, exists, instant)
-        val item2 = CrnTraceCacheItem("first", "last", dateOfBirth2, exists, instant)
-        val item3 = CrnTraceCacheItem("other first", "last", dateOfBirth2, exists, instant)
-        val item4 = CrnTraceCacheItem("first", "other last", dateOfBirth2, exists, instant)
+        val item1 = IndividualTraceCacheItem("first", "last", dateOfBirth1, exists, instant)
+        val item2 = IndividualTraceCacheItem("first", "last", dateOfBirth2, exists, instant)
+        val item3 = IndividualTraceCacheItem("other first", "last", dateOfBirth2, exists, instant)
+        val item4 = IndividualTraceCacheItem("first", "other last", dateOfBirth2, exists, instant)
 
         insert(item1).futureValue
         insert(item2).futureValue
@@ -105,11 +103,11 @@ class CrnTraceCacheRepositorySpec
 
         val dateOfBirth1 = LocalDate.of(2000, 1, 2)
         val dateOfBirth2 = LocalDate.of(2000, 1, 3)
-        val request = CrnTraceRequest("first", "last", dateOfBirth1)
+        val request = IndividualTraceRequest("first", "last", dateOfBirth1)
         val exists = true
-        val item1 = CrnTraceCacheItem("first", "last", dateOfBirth2, exists, instant)
-        val item2 = CrnTraceCacheItem("other first", "last", dateOfBirth2, exists, instant)
-        val item3 = CrnTraceCacheItem("first", "other last", dateOfBirth2, exists, instant)
+        val item1 = IndividualTraceCacheItem("first", "last", dateOfBirth2, exists, instant)
+        val item2 = IndividualTraceCacheItem("other first", "last", dateOfBirth2, exists, instant)
+        val item3 = IndividualTraceCacheItem("first", "other last", dateOfBirth2, exists, instant)
 
         insert(item1).futureValue
         insert(item2).futureValue

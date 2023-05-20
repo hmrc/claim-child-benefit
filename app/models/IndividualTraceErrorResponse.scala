@@ -18,11 +18,12 @@ package models
 
 import play.api.libs.json.{Json, OFormat}
 
-import java.time.LocalDate
+final case class IndividualTraceErrorResponse(code: String, reason: String)
 
-final case class CrnTraceRequest(forename: String, surname: String, dateOfBirth: LocalDate)
+object IndividualTraceErrorResponse {
 
-object CrnTraceRequest {
+  implicit lazy val format: OFormat[IndividualTraceErrorResponse] = Json.format
 
-  implicit lazy val format: OFormat[CrnTraceRequest] = Json.format
+  val tooManyMatches: String = "TOO_MANY_MATCHES"
+  val noMatchFound: String   = "NO_MATCH_FOUND"
 }

@@ -22,27 +22,27 @@ import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 import java.time.{Instant, LocalDate}
 
-final case class CrnTraceCacheItem(forename: String, surname: String, dateOfBirth: LocalDate, exists: Boolean, timestamp: Instant)
+final case class IndividualTraceCacheItem(forename: String, surname: String, dateOfBirth: LocalDate, exists: Boolean, timestamp: Instant)
 
-object CrnTraceCacheItem {
+object IndividualTraceCacheItem {
 
-  lazy val reads: Reads[CrnTraceCacheItem] =
+  lazy val reads: Reads[IndividualTraceCacheItem] =
     (
       (__ \ "forename").read[String] and
       (__ \ "surname").read[String] and
       (__ \ "dateOfBirth").read(MongoJavatimeFormats.localDateFormat) and
       (__ \ "exists").read[Boolean] and
       (__ \ "timestamp").read(MongoJavatimeFormats.instantFormat)
-    )(CrnTraceCacheItem.apply _)
+    )(IndividualTraceCacheItem.apply _)
 
-  lazy val writes: OWrites[CrnTraceCacheItem] =
+  lazy val writes: OWrites[IndividualTraceCacheItem] =
     (
       (__ \ "forename").write[String] and
       (__ \ "surname").write[String] and
       (__ \ "dateOfBirth").write(MongoJavatimeFormats.localDateFormat) and
       (__ \ "exists").write[Boolean] and
       (__ \ "timestamp").write(MongoJavatimeFormats.instantFormat)
-    )(unlift(CrnTraceCacheItem.unapply))
+    )(unlift(IndividualTraceCacheItem.unapply))
 
-  implicit lazy val format: OFormat[CrnTraceCacheItem] = OFormat(reads, writes)
+  implicit lazy val format: OFormat[IndividualTraceCacheItem] = OFormat(reads, writes)
 }
