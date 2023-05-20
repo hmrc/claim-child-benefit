@@ -19,10 +19,10 @@ package controllers
 import models.IndividualTraceRequest
 import org.mockito.ArgumentMatchers.any
 import org.mockito.{Mockito, MockitoSugar}
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
@@ -30,8 +30,8 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.IndividualTraceService
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.internalauth.client.BackendAuthComponents
 import uk.gov.hmrc.internalauth.client.test.{BackendAuthComponentsStub, StubBehaviour}
-import uk.gov.hmrc.internalauth.client.{BackendAuthComponents, IAAction, Predicate, Resource, ResourceLocation, ResourceType}
 
 import java.time.LocalDate
 import scala.concurrent.ExecutionContext.global

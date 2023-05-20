@@ -33,7 +33,7 @@ class IndividualTraceController @Inject()(
 
   private val permission = Predicate.Permission(
     resource = Resource(
-      resourceType = ResourceType("claim-child-benefit-admin"),
+      resourceType = ResourceType("claim-child-benefit"),
       resourceLocation = ResourceLocation("individual-trace")
     ),
     action = IAAction("READ")
