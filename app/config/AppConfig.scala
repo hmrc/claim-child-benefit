@@ -29,4 +29,5 @@ class AppConfig @Inject()(config: Configuration) {
   val recentClaimsTtlInDays: Int = config.get[Int]("mongodb.recentClaimsTtlInDays")
   val designatoryDetailsTtlInSeconds = config.get[Int]("mongodb.designatoryDetailsTtlInSeconds")
   val relationshipDetailsTtlInSeconds = config.get[Int]("mongodb.relationshipDetailsTtlInSeconds")
+  val crnTraceTtlInSeconds = config.get[Int]("mongodb.crnTraceTtlInSeconds")
 }
