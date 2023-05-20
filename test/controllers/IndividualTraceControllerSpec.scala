@@ -16,7 +16,7 @@
 
 package controllers
 
-import models.IndividualTraceRequest
+import models.{IndividualTraceRequest, IndividualTraceResponse}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.{Mockito, MockitoSugar}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
@@ -71,7 +71,7 @@ class IndividualTraceControllerSpec
 
   ".trace" - {
 
-    "must return NO_CONTENT when the calling service is authorised and there is a match" in {
+    "must return OK(true) when the calling service is authorised and there is a match" in {
 
       when(mockStubBehaviour.stubAuth[Unit](any(), any())).thenReturn(Future.unit)
       when(mockService.trace(any())(any())).thenReturn(Future.successful(true))
@@ -83,7 +83,8 @@ class IndividualTraceControllerSpec
 
       val result = route(app, request).value
 
-      status(result) mustEqual NO_CONTENT
+      status(result) mustEqual OK
+      contentAsJson(result) mustEqual Json.toJson(IndividualTraceResponse(true))
     }
 
     "must return NOT_FOUND when the calling service is authorised and there is no match" in {
@@ -99,7 +100,8 @@ class IndividualTraceControllerSpec
 
       val result = route(app, request).value
 
-      status(result) mustEqual NOT_FOUND
+      status(result) mustEqual OK
+      contentAsJson(result) mustEqual Json.toJson(IndividualTraceResponse(false))
     }
 
     "must fail when the calling service is not authorised" in {

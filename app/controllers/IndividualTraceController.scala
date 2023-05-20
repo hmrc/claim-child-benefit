@@ -16,7 +16,8 @@
 
 package controllers
 
-import models.IndividualTraceRequest
+import models.{IndividualTraceRequest, IndividualTraceResponse}
+import play.api.libs.json.Json
 import play.api.mvc.{Action, ControllerComponents}
 import services.IndividualTraceService
 import uk.gov.hmrc.internalauth.client._
@@ -43,9 +44,8 @@ class IndividualTraceController @Inject()(
 
   def trace: Action[IndividualTraceRequest] = authorised.compose(Action(parse.json[IndividualTraceRequest])).async {
     implicit request =>
-      service.trace(request.body).map {
-        case true  => NoContent
-        case false => NotFound
+      service.trace(request.body).map { result =>
+        Ok(Json.toJson(IndividualTraceResponse(result)))
       }
   }
 }
