@@ -25,3 +25,5 @@ GET         /relationship-details   controllers.RelationshipDetailsController.ge
 
 GET         /recent-claims          controllers.RecentClaimController.get
 POST        /recent-claims          controllers.RecentClaimController.set
+
+POST        /individuals/trace       controllers.IndividualTraceController.trace
