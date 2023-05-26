@@ -16,6 +16,7 @@
 
 package controllers
 
+import models.Done
 import models.dmsa.{ListResult, SubmissionItem, SubmissionItemStatus}
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
@@ -69,5 +70,14 @@ class SupplementaryDataAdminController @Inject()(
       submissionItemRepository
         .dailySummaries
         .map(summaries => Ok(Json.obj("summaries" -> summaries)))
+    }
+
+  def retry(id: String): Action[AnyContent] =
+    authorised.async {
+      submissionItemRepository.retry(id)
+        .map(_ => Ok )
+        .recover { case SubmissionItemRepository.NothingToUpdateException =>
+          NotFound
+        }
     }
 }

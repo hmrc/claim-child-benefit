@@ -13,6 +13,7 @@ POST        /supplementary-data                  controllers.SupplementaryDataCo
 GET         /supplementary-data                  controllers.SupplementaryDataAdminController.list(status: Option[SubmissionItemStatus] ?= None, created: Option[LocalDate] ?= None, limit: Int ?= 50, offset: Int ?= 0)
 GET         /supplementary-data/summaries        controllers.SupplementaryDataAdminController.dailySummaries()
 GET         /supplementary-data/:id              controllers.SupplementaryDataAdminController.show(id: String)
+POST        /supplementary-data/:id/retry        controllers.SupplementaryDataAdminController.retry(id: String)
 POST        /sdes/callback                       controllers.SdesCallbackController.callback
 
 GET         /throttle/check         controllers.ThrottleController.checkLimit
