@@ -16,6 +16,7 @@
 
 package controllers
 
+import models.Done
 import models.dmsa._
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.{Mockito, MockitoSugar}
@@ -245,6 +246,67 @@ class SupplementaryDataAdminControllerSpec
 
       route(app, request).value.failed.futureValue
       verify(mockSubmissionItemRepository, never).dailySummaries
+    }
+  }
+
+  "retry" - {
+
+    "must retry a submission item and return OK when the repository call succeeds" in {
+
+      val predicate = Permission(Resource(ResourceType("claim-child-benefit-admin"), ResourceLocation("supplementary-data")), IAAction("ADMIN"))
+      when(mockSubmissionItemRepository.retry(any())).thenReturn(Future.successful(Done))
+      when(mockStubBehaviour.stubAuth[Unit](any(), any())).thenReturn(Future.unit)
+
+      val request =
+        FakeRequest(routes.SupplementaryDataAdminController.retry("id"))
+          .withHeaders("Authorization" -> "Token foo")
+
+      val result = route(app, request).value
+
+      status(result) mustEqual OK
+
+      verify(mockStubBehaviour).stubAuth(Some(predicate), Retrieval.EmptyRetrieval)
+      verify(mockSubmissionItemRepository).retry("id")
+    }
+
+    "must return NOT_FOUND when the repository fails with a NothingToUpdateException" in {
+
+      val predicate = Permission(Resource(ResourceType("claim-child-benefit-admin"), ResourceLocation("supplementary-data")), IAAction("ADMIN"))
+      when(mockSubmissionItemRepository.retry(any())).thenReturn(Future.failed(SubmissionItemRepository.NothingToUpdateException))
+      when(mockStubBehaviour.stubAuth[Unit](any(), any())).thenReturn(Future.unit)
+
+      val request =
+        FakeRequest(routes.SupplementaryDataAdminController.retry("id"))
+          .withHeaders("Authorization" -> "Token foo")
+
+      val result = route(app, request).value
+
+      status(result) mustEqual NOT_FOUND
+
+      verify(mockStubBehaviour).stubAuth(Some(predicate), Retrieval.EmptyRetrieval)
+      verify(mockSubmissionItemRepository).retry("id")
+    }
+
+    "must fail for an unauthenticated user" in {
+
+      when(mockStubBehaviour.stubAuth[Unit](any(), any())).thenReturn(Future.unit)
+
+      val request = FakeRequest(routes.SupplementaryDataAdminController.retry("id")) // No Authorization header
+
+      route(app, request).value.failed.futureValue
+      verify(mockSubmissionItemRepository, never).retry(any())
+    }
+
+    "must fail when the user is not authorised" in {
+
+      when(mockStubBehaviour.stubAuth[Unit](any(), any())).thenReturn(Future.failed(new Exception("foo")))
+
+      val request =
+        FakeRequest(routes.SupplementaryDataAdminController.retry("id"))
+          .withHeaders("Authorization" -> "Token foo")
+
+      route(app, request).value.failed.futureValue
+      verify(mockSubmissionItemRepository, never).retry(any())
     }
   }
 }

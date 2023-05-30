@@ -394,6 +394,39 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
     }
   }
 
+  "retry" - {
+
+    "must reset the status of the given item to Submitted and set the reset counter to 1 when an item has no retries field" in {
+
+      val item = randomItem.copy(status = SubmissionItemStatus.Forwarded)
+      repository.insert(item).futureValue
+
+      repository.retry(item.id).futureValue
+
+      val updatedItem = repository.get(item.id).futureValue.value
+
+      updatedItem.retries.value mustEqual 1
+      updatedItem.status mustEqual SubmissionItemStatus.Submitted
+    }
+
+    "must reset the status of the given item to Submitted and increment the reset counter when an item has already been retried" in {
+
+      val item = randomItem.copy(status = SubmissionItemStatus.Forwarded, retries = Some(1))
+      repository.insert(item).futureValue
+
+      repository.retry(item.id).futureValue
+
+      val updatedItem = repository.get(item.id).futureValue.value
+
+      updatedItem.retries.value mustEqual 2
+      updatedItem.status mustEqual SubmissionItemStatus.Submitted
+    }
+
+    "must fail when there is no item with the given id" in {
+      repository.retry(UUID.randomUUID().toString).failed.futureValue
+    }
+  }
+
   private def randomItem: SubmissionItem = item.copy(
     id = UUID.randomUUID().toString,
     sdesCorrelationId = UUID.randomUUID().toString,

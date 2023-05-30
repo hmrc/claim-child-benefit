@@ -222,6 +222,21 @@ class SubmissionItemRepository @Inject() (
 
   def countByStatus(status: SubmissionItemStatus): Future[Long] =
     collection.countDocuments(Filters.equal("status", status)).toFuture()
+
+  def retry(id: String): Future[Done] = {
+    collection.findOneAndUpdate(
+      filter = Filters.equal("id", id),
+      update = Updates.combine(
+        Updates.inc("retries", 1),
+        Updates.set("status", SubmissionItemStatus.Submitted),
+        Updates.set("lastUpdated", clock.instant())
+      ),
+      options = FindOneAndUpdateOptions().upsert(false)
+    ).headOption().flatMap {
+      _.map(_ => Future.successful(Done))
+        .getOrElse(Future.failed(SubmissionItemRepository.NothingToUpdateException))
+    }
+  }
 }
 
 object SubmissionItemRepository {
