@@ -16,12 +16,6 @@ GET         /supplementary-data/:id              controllers.SupplementaryDataAd
 POST        /supplementary-data/:id/retry        controllers.SupplementaryDataAdminController.retry(id: String)
 POST        /sdes/callback                       controllers.SdesCallbackController.callback
 
-GET         /throttle/check         controllers.ThrottleController.checkLimit
-POST        /throttle/increment     controllers.ThrottleController.incrementCount
-
-GET         /admin/throttle         controllers.ThrottleAdminController.get
-PUT         /admin/throttle/limit   controllers.ThrottleAdminController.setLimit
-
 GET         /relationship-details   controllers.RelationshipDetailsController.get
 
 GET         /recent-claims          controllers.RecentClaimController.get
