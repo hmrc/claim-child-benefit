@@ -35,7 +35,7 @@ class LocalDateQueryStringBindableSpec extends AnyFreeSpec with Matchers with Op
 
 
     "must successfully parse a local date" in {
-      bind("2022-02-01").right.value mustEqual LocalDate.of(2022, 2, 1)
+      bind("2022-02-01") mustEqual Right(LocalDate.of(2022, 2, 1))
     }
 
     "must fail to parse an invalid date" in {

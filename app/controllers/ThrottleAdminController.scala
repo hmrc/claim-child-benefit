@@ -20,7 +20,7 @@ import models.SetLimitRequest
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import repositories.ThrottleRepository
-import uk.gov.hmrc.internalauth.client.{BackendAuthComponents, IAAction, Predicate, Resource, ResourceLocation, ResourceType}
+import uk.gov.hmrc.internalauth.client._
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.Inject
@@ -43,10 +43,9 @@ class ThrottleAdminController @Inject()(
   private val authorised = auth.authorizedAction(permission)
 
   def get: Action[AnyContent] = authorised.async {
-    implicit request =>
-      repository
-        .get
-        .map(result => Ok(Json.toJson(result)))
+    repository
+      .get
+      .map(result => Ok(Json.toJson(result)))
   }
 
   def setLimit: Action[SetLimitRequest] = authorised.compose(Action(parse.json[SetLimitRequest])).async {

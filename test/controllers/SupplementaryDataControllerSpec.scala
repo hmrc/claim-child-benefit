@@ -46,6 +46,8 @@ import java.util.UUID
 import scala.concurrent.ExecutionContext.global
 import scala.concurrent.Future
 
+import scala.language.existentials
+
 class SupplementaryDataControllerSpec extends AnyFreeSpec with Matchers with ScalaFutures with OptionValues with MockitoSugar with BeforeAndAfterEach {
 
   override def beforeEach(): Unit = {
@@ -102,11 +104,11 @@ class SupplementaryDataControllerSpec extends AnyFreeSpec with Matchers with Sca
         val correlationId = UUID.randomUUID().toString
 
         val tempFile = SingletonTemporaryFileCreator.create()
-        val betterTempFile = File(tempFile.toPath)
+        val betterTempFile: File = File(tempFile.toPath)
           .deleteOnExit()
           .writeByteArray(pdfBytes)
 
-        val request = FakeRequest(routes.SupplementaryDataController.submit)
+        val request = FakeRequest(routes.SupplementaryDataController.submit())
           .withHeaders(AUTHORIZATION -> "my-token")
           .withMultipartFormDataBody(
             MultipartFormData(
@@ -158,7 +160,7 @@ class SupplementaryDataControllerSpec extends AnyFreeSpec with Matchers with Sca
         val submissionDateString = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.ofInstant(submissionDate, ZoneOffset.UTC))
         val correlationId = UUID.randomUUID().toString
 
-        val request = FakeRequest(routes.SupplementaryDataController.submit)
+        val request = FakeRequest(routes.SupplementaryDataController.submit())
           .withHeaders(AUTHORIZATION -> "my-token")
           .withMultipartFormDataBody(
             MultipartFormData(
@@ -188,7 +190,7 @@ class SupplementaryDataControllerSpec extends AnyFreeSpec with Matchers with Sca
         when(mockStubBehaviour.stubAuth(Some(permission), Retrieval.EmptyRetrieval))
           .thenReturn(Future.unit)
 
-        val request = FakeRequest(routes.SupplementaryDataController.submit)
+        val request = FakeRequest(routes.SupplementaryDataController.submit())
           .withHeaders(AUTHORIZATION -> "my-token")
           .withMultipartFormDataBody(
             MultipartFormData(
@@ -202,7 +204,7 @@ class SupplementaryDataControllerSpec extends AnyFreeSpec with Matchers with Sca
 
         status(result) mustEqual BAD_REQUEST
         val responseBody = contentAsJson(result).as[SubmissionResponse.Failure]
-        responseBody.errors must contain only (
+        responseBody.errors must contain theSameElementsAs Seq(
           "metadata.nino: This field is required",
           "metadata.submissionDate: This field is required",
           "metadata.correlationId: This field is required",
@@ -224,7 +226,7 @@ class SupplementaryDataControllerSpec extends AnyFreeSpec with Matchers with Sca
           .deleteOnExit()
           .writeText("Hello, World!")
 
-        val request = FakeRequest(routes.SupplementaryDataController.submit)
+        val request = FakeRequest(routes.SupplementaryDataController.submit())
           .withHeaders(AUTHORIZATION -> "my-token")
           .withMultipartFormDataBody(
             MultipartFormData(
@@ -265,7 +267,7 @@ class SupplementaryDataControllerSpec extends AnyFreeSpec with Matchers with Sca
 
         val nino = NinoGenerator.randomNino()
 
-        val request = FakeRequest(routes.SupplementaryDataController.submit)
+        val request = FakeRequest(routes.SupplementaryDataController.submit())
           .withHeaders(AUTHORIZATION -> "my-token")
           .withMultipartFormDataBody(
             MultipartFormData(

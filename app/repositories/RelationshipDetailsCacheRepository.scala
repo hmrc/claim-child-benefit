@@ -55,11 +55,11 @@ class RelationshipDetailsCacheRepository @Inject()(
       filter = Filters.equal("_id", item.nino),
       replacement = item,
       options = ReplaceOptions().upsert(true)
-    ).toFuture.map(_ => Done)
+    ).toFuture().map(_ => Done)
   }
 
   def get(nino: String): Future[Option[RelationshipDetails]] =
     collection.find(Filters.equal("_id", nino))
-      .headOption
+      .headOption()
       .map(_.map(_.details))
 }

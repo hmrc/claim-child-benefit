@@ -23,6 +23,7 @@ import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 
 import javax.inject.{Inject, Singleton}
+import scala.annotation.nowarn
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -40,12 +41,13 @@ class ThrottleRepository @Inject()(
   private val seedRecord = ThrottleData(0, 0)
   private val duplicateErrorCode = 11000
 
+  @nowarn
   private val seedDatabase = seed // Eagerly call seed to make sure a record is inserted on startup if needed
 
   def seed: Future[Done] =
     collection
       .insertOne(seedRecord)
-      .toFuture
+      .toFuture()
       .map(_ => Done)
       .recover {
         case e: MongoWriteException if e.getError.getCode == duplicateErrorCode => Done
@@ -54,17 +56,17 @@ class ThrottleRepository @Inject()(
   def incrementCount: Future[Done] =
     collection
       .updateOne(byId, Updates.inc("count", 1))
-      .toFuture
+      .toFuture()
       .map(_ => Done)
 
   def updateLimit(newLimit: Int): Future[Done] =
     collection
       .updateOne(byId, Updates.set("limit", newLimit))
-      .toFuture
+      .toFuture()
       .map(_ => Done)
 
   def get: Future[ThrottleData] =
     collection
       .find(byId)
-      .head
+      .head()
 }

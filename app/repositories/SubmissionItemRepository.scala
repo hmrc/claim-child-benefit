@@ -30,6 +30,7 @@ import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import java.time.{Clock, Duration, LocalDate, ZoneOffset}
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
+import scala.annotation.nowarn
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -147,6 +148,7 @@ class SubmissionItemRepository @Inject() (
 
     import SubmissionItemStatus._
 
+    @nowarn("msg=possible missing interpolator")
     def countStatus(status: SubmissionItemStatus): JsObject = Json.obj(
       "$sum" -> Json.obj(
         "$cond" -> Json.obj(

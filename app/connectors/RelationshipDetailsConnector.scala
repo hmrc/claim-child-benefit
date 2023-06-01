@@ -22,6 +22,7 @@ import play.api.Configuration
 import play.api.http.HeaderNames
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
+import uk.gov.hmrc.http.HttpReads.Implicits.readFromJson
 
 import java.util.UUID
 import javax.inject.Inject
