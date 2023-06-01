@@ -19,19 +19,19 @@ package controllers
 import models.{Done, SetLimitRequest, ThrottleData}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.{Mockito, MockitoSugar}
-import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import play.api.test.{FakeRequest, Helpers}
+import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import repositories.ThrottleRepository
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.internalauth.client.{BackendAuthComponents, IAAction, Predicate, Resource, ResourceLocation, ResourceType}
 import uk.gov.hmrc.internalauth.client.test.{BackendAuthComponentsStub, StubBehaviour}
+import uk.gov.hmrc.internalauth.client._
 
 import scala.concurrent.ExecutionContext.global
 import scala.concurrent.Future
@@ -51,16 +51,9 @@ class ThrottleAdminControllerSpec
   private val mockStubBehaviour = mock[StubBehaviour]
   private val backendAuthComponents: BackendAuthComponents =
     BackendAuthComponentsStub(mockStubBehaviour)(stubControllerComponents(), global)
-  private val permission = Predicate.Permission(
-    resource = Resource(
-      resourceType = ResourceType("claim-child-benefit-admin"),
-      resourceLocation = ResourceLocation("throttle")
-    ),
-    action = IAAction("ADMIN")
-  )
 
   override def beforeEach(): Unit = {
-    Mockito.reset(mockAuthConnector, mockRepo, mockStubBehaviour)
+    Mockito.reset[Any](mockAuthConnector, mockRepo, mockStubBehaviour)
     super.beforeEach()
   }
 

@@ -12,7 +12,13 @@ lazy val microservice = Project("claim-child-benefit", file("."))
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
     // https://www.scala-lang.org/2021/01/12/configuring-and-suppressing-warnings.html
     // suppress warnings in generated routes files
-    scalacOptions += "-Wconf:src=routes/.*:s",
+    scalacOptions ++= Seq(
+      "-Wconf:src=routes/.*:s",
+      "-Xfatal-warnings",
+      "-feature",
+      "-deprecation",
+      "-Xlint"
+    ),
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
     buildInfoKeys := Seq[BuildInfoKey](name, version, PlayKeys.playDefaultPort),
     buildInfoPackage := "buildinfo",

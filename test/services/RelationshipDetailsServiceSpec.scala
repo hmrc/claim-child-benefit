@@ -49,7 +49,7 @@ class RelationshipDetailsServiceSpec extends AnyFreeSpec with Matchers with Mock
     .overrides(
       bind[RelationshipDetailsConnector].toInstance(mockConnector),
       bind[RelationshipDetailsCacheRepository].toInstance(mockRepository)
-    )
+    ).build()
 
   private lazy val service = app.injector.instanceOf[RelationshipDetailsService]
 

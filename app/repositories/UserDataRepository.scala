@@ -61,7 +61,7 @@ class UserDataRepository @Inject()(
         filter = byId(id),
         update = Updates.set("lastUpdated", Instant.now(clock)),
       )
-      .toFuture
+      .toFuture()
       .map(_ => Done)
 
   def get(id: String): Future[Option[UserData]] =
@@ -69,7 +69,7 @@ class UserDataRepository @Inject()(
       _ =>
         collection
           .find(byId(id))
-          .headOption
+          .headOption()
     }
 
   def set(userData: UserData): Future[Done] = {
@@ -82,13 +82,13 @@ class UserDataRepository @Inject()(
         replacement = updatedUserData,
         options = ReplaceOptions().upsert(true)
       )
-      .toFuture
+      .toFuture()
       .map(_ => Done)
   }
 
   def clear(id: String): Future[Done] =
     collection
       .deleteOne(byId(id))
-      .toFuture
+      .toFuture()
       .map(_ => Done)
 }

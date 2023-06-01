@@ -9,7 +9,7 @@ POST        /user-data/keep-alive   controllers.UserDataController.keepAlive
 GET         /designatory-details    controllers.DesignatoryDetailsController.get
 
 POST        /submit                              controllers.CbsProxyController.submit
-POST        /supplementary-data                  controllers.SupplementaryDataController.submit
+POST        /supplementary-data                  controllers.SupplementaryDataController.submit()
 GET         /supplementary-data                  controllers.SupplementaryDataAdminController.list(status: Option[SubmissionItemStatus] ?= None, created: Option[LocalDate] ?= None, limit: Int ?= 50, offset: Int ?= 0)
 GET         /supplementary-data/summaries        controllers.SupplementaryDataAdminController.dailySummaries()
 GET         /supplementary-data/:id              controllers.SupplementaryDataAdminController.show(id: String)

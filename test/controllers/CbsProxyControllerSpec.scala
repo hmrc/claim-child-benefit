@@ -99,7 +99,6 @@ class CbsProxyControllerSpec
       contentAsJson(result) mustEqual responseBody
 
       verify(mockConnector).submit(eqTo(requestBody), eqTo(correlationId))(any())
-//      verify(mockStubBehaviour).stubAuth(Some(permission), Retrieval.EmptyRetrieval) TODO
     }
 
     "must return BAD_REQUEST when the request is missing a json body" in {
@@ -163,7 +162,6 @@ class CbsProxyControllerSpec
     "must fail when the user is not authorised" in {
 
       val requestBody = Json.obj("foo" -> "bar")
-      val responseBody = Json.obj("bar" -> "foo")
       val correlationId = "correlationId"
 
       when(mockStubBehaviour.stubAuth(Some(permission), Retrieval.EmptyRetrieval))
