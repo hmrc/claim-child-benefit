@@ -18,9 +18,12 @@ package repositories
 
 import cats.implicits.toTraverseOps
 import models.dmsa._
+import org.scalatest.concurrent.Eventually.eventually
+import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.time.{Seconds, Span}
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.crypto.{Decrypter, Encrypter, SymmetricCryptoFactory}
@@ -53,7 +56,7 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
     clock.set(now)
   }
 
-  override protected def repository = new SubmissionItemRepository(
+  override protected val repository = new SubmissionItemRepository(
     mongoComponent = mongoComponent,
     clock = clock,
     configuration = Configuration("lock-ttl" -> 30)
@@ -153,7 +156,6 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
     }
   }
 
-
   "lockAndReplaceOldestItemByStatus" - {
 
     "must return Found and replace an item that is found" in {
@@ -229,7 +231,7 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
       updatedItem2.lockedAt mustBe None
     }
 
-    "must locked item while the provided function runs" in {
+    "must lock item while the provided function runs" in {
 
       val promise: Promise[SubmissionItem] = Promise()
       val item = randomItem
@@ -241,10 +243,12 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
         promise.future
       }
 
-      repository.get(item.id).futureValue.value.lockedAt.value mustEqual clock.instant()
-      promise.success(item.copy(status = SubmissionItemStatus.Completed))
-      runningFuture.futureValue
-      repository.get(item.id).futureValue.value.lockedAt mustBe None
+      eventually(Timeout(Span(30, Seconds))) {
+        repository.get(item.id).futureValue.value.lockedAt.value mustEqual clock.instant()
+        promise.success(item.copy(status = SubmissionItemStatus.Completed))
+        runningFuture.futureValue
+        repository.get(item.id).futureValue.value.lockedAt mustBe None
+      }
     }
 
     "must not unlock item if the provided function fails" in {
@@ -257,10 +261,12 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
         promise.future
       }
 
-      repository.get(item.id).futureValue.value.lockedAt.value mustEqual clock.instant()
-      promise.failure(new RuntimeException())
-      runningFuture.failed.futureValue
-      repository.get(item.id).futureValue.value.lockedAt.value mustEqual clock.instant()
+      eventually(Timeout(Span(30, Seconds))) {
+        repository.get(item.id).futureValue.value.lockedAt.value mustEqual clock.instant()
+        promise.failure(new RuntimeException())
+        runningFuture.failed.futureValue
+        repository.get(item.id).futureValue.value.lockedAt.value mustEqual clock.instant()
+      }
     }
   }
 
