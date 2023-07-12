@@ -59,8 +59,8 @@ class RelationshipDetailsServiceSpec extends AnyFreeSpec with Matchers with Mock
   private val relationshipDetailsResponse =
     RelationshipDetails(
       Relationships(Some(List(
-        Relationship(RelationshipType.AdultChild, RelationshipSource.CHB),
-        Relationship(RelationshipType.AdultDerived, RelationshipSource.TFC)
+        Relationship(nino, RelationshipType.AdultChild, RelationshipSource.CHB),
+        Relationship(nino, RelationshipType.AdultDerived, RelationshipSource.TFC)
       )))
     )
 

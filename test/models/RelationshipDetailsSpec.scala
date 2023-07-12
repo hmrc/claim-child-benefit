@@ -21,32 +21,43 @@ import org.scalatest.matchers.must.Matchers
 
 class RelationshipDetailsSpec extends AnyFreeSpec with Matchers {
 
+  val nino = "AA123456"
+
   ".hasChildBenefitRelationship" - {
 
     "must be true when there is an adult-child CBS relationship in the list" in {
 
       val details = RelationshipDetails(Relationships(Some(List(
-        Relationship(RelationshipType.AdultChild, RelationshipSource.CHB)
+        Relationship(nino, RelationshipType.AdultChild, RelationshipSource.CHB)
       ))))
 
-      details.hasClaimedChildBenefit mustEqual true
+      details.hasClaimedChildBenefit(nino) mustEqual true
+    }
+
+    "must be false when there are relationships, but claimant is not the parent in relationship" in {
+
+      val details = RelationshipDetails(Relationships(Some(List(
+        Relationship("JT123456", RelationshipType.AdultChild, RelationshipSource.CHB)
+      ))))
+
+      details.hasClaimedChildBenefit(nino) mustEqual false
     }
 
     "must be false when there are relationships, but not an adult-child CBS one" in {
 
       val details = RelationshipDetails(Relationships(Some(List(
-        Relationship(RelationshipType.AdultAdult, RelationshipSource.CHB),
-        Relationship(RelationshipType.AdultChild, RelationshipSource.TFC)
+        Relationship(nino, RelationshipType.AdultAdult, RelationshipSource.CHB),
+        Relationship(nino, RelationshipType.AdultChild, RelationshipSource.TFC)
       ))))
 
-      details.hasClaimedChildBenefit mustEqual false
+      details.hasClaimedChildBenefit(nino) mustEqual false
     }
 
     "must be false when there are no relationships" in {
 
       val details = RelationshipDetails(Relationships(None))
 
-      details.hasClaimedChildBenefit mustEqual false
+      details.hasClaimedChildBenefit(nino) mustEqual false
     }
   }
 }

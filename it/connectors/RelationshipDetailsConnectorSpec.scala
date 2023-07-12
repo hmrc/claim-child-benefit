@@ -56,23 +56,24 @@ class RelationshipDetailsConnectorSpec
 
     val hc = HeaderCarrier()
 
-    val expectedResult = RelationshipDetails(
-      Relationships(
-        Some(List(
-          Relationship(
-            relationshipType = RelationshipType.AdultChild,
-            relationshipSource = RelationshipSource.CHB
-          )
-        )
-      )
-    ))
-
     "must return relationships when they exist" in {
 
       val nino = NinoGenerator.randomNino()
       val trimmedNino = nino.take(8)
       val url = s"/individuals/relationship/$trimmedNino"
       val correlationId = UUID.randomUUID().toString
+
+      val expectedResult = RelationshipDetails(
+        Relationships(
+          Some(List(
+            Relationship(
+              nino,
+              relationshipType = RelationshipType.AdultChild,
+              relationshipSource = RelationshipSource.CHB
+            )
+          )
+          )
+        ))
 
       server.stubFor(
         get(urlPathEqualTo(url))
