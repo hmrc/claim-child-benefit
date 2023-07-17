@@ -19,6 +19,7 @@ package models
 import play.api.libs.json.{Json, OFormat}
 
 final case class Relationship(
+                               nino: String,
                                relationshipType: RelationshipType,
                                relationshipSource: RelationshipSource
                              )

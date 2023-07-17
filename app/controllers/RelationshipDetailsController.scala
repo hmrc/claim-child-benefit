@@ -36,7 +36,7 @@ class RelationshipDetailsController @Inject()(
     request.nino.map { nino =>
       service.getRelationshipDetails(nino).map { data =>
         Ok(
-          Json.toJson(RelationshipDetailsResponse(data.hasClaimedChildBenefit))
+          Json.toJson(RelationshipDetailsResponse(data.hasClaimedChildBenefit(nino)))
         )
       }
     }.getOrElse(Future.successful(BadRequest(errorJson)))

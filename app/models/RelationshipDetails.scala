@@ -20,10 +20,11 @@ import play.api.libs.json.{Json, OFormat}
 
 final case class RelationshipDetails(relationships: Relationships) {
 
-  lazy val hasClaimedChildBenefit: Boolean =
+  def hasClaimedChildBenefit(claimantNino: String): Boolean =
     relationships.relationship.getOrElse(Nil).exists(r =>
       r.relationshipType == RelationshipType.AdultChild &&
-        r.relationshipSource == RelationshipSource.CHB
+        r.relationshipSource == RelationshipSource.CHB &&
+        r.nino == claimantNino.take(8)
     )
 }
 
