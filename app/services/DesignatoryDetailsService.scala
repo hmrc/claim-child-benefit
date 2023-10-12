@@ -72,7 +72,8 @@ class DesignatoryDetailsService @Inject() (
               .map(_ => details)
               .recover {
                 case e: Exception =>
-                  logger.warn("Error caching designatory details", e.getMessage)
+                  logger.debug("Error caching designatory details", e.getMessage)
+                  logger.warn("Error caching designatory details")
                   details
               }
           }
