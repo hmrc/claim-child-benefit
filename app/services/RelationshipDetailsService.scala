@@ -43,7 +43,8 @@ class RelationshipDetailsService @Inject()(
                 .map(_ => result)
                 .recover {
                   case e: Exception =>
-                    logger.warn("Error caching relationship details", e.getMessage)
+                    logger.warn("Error caching relationship details")
+                    logger.debug("Error caching relationship details", e.getMessage)
                     result
                 }
           }

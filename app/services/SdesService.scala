@@ -52,7 +52,8 @@ class SdesService @Inject() (
         newItem
       }
     }.recover { case e =>
-      logger.error("Error notifying SDES about a submitted item", e)
+      logger.debug("Error notifying SDES about a submitted item", e)
+      logger.error("Error notifying SDES about a submitted item")
       QueryResult.Found
     }
 
