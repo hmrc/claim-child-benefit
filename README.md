@@ -11,7 +11,7 @@ This is the backend service for claim-child-benenfit-frontend. This service allo
 More information is here - https://confluence.tools.tax.service.gov.uk/pages/viewpage.action?pageId=673382904
  
 ### How to run the service
-You can run the service using service manager with profile `CLAIM_CHILD_BENEFIT_ALL` or locally with `sbt 11305`
+You can run the service using service manager with profile `CLAIM_CHILD_BENEFIT_ALL` `CLAIM_CHILD_BENEFIT` or locally with `sbt "run 11305"`
 
 ### License
 
