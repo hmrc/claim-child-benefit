@@ -1,7 +1,7 @@
 
 # claim-child-benefit
 
-This is the backend service for claim-child-benenfit-frontend. This service allows unauthenticated/authenticated users to claim Child Benefit by answering the relevant questions, printing out a PDF and posting it to HMRC to be processed. It replaces an existing iForm offering similar functionality. The service calls many different services:
+This is the backend service for claim-child-benenfit-frontend. This service allows authenticated and unauthenticated users to claim Child Benefit by answering the relevant questions, printing out a PDF and posting it to HMRC to be processed. It replaces an existing iForm offering similar functionality. The service calls many different services:
 
 - CBS to submit auntechicated users child benefit
 - IF Individual details to get designatory details
