@@ -50,7 +50,7 @@ class SdesCallbackController @Inject() (
   private val timer: Timer = metricRegistry.timer("supplementary-data.timer")
 
   def callback = Action.async(parse.json[NotificationCallback]) { implicit request =>
-    logger.info(s"SDES Callback received for correlationId: ${request.body.correlationID}, with status: ${request.body.notification}")
+    logger.info(s"SDES Callback received for correlationId: ${request.body.correlationID}, with status: ${request.body.notification}, and failureReason: ${request.body.failureReason.getOrElse("")}")
     retryService.retry(
       submissionItemRepository.getByCorrelationId(request.body.correlationID).flatMap {
         _.map { item =>
