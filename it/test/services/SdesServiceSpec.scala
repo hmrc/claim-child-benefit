@@ -21,11 +21,13 @@ import models.Done
 import models.dmsa._
 import models.sdes._
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.{Mockito, MockitoSugar}
+import org.mockito.Mockito
+import org.mockito.Mockito._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.{Configuration, Environment}
@@ -200,8 +202,8 @@ class SdesServiceSpec extends AnyFreeSpec with Matchers
 
       when(mockSdesConnector.notify(any())(any()))
         .thenReturn(Future.successful(Done))
-        .andThen(Future.failed(new RuntimeException()))
-        .andThen(Future.successful(Done))
+        .thenReturn(Future.failed(new RuntimeException()))
+        .thenReturn(Future.successful(Done))
 
       repository.insert(item1).futureValue
       repository.insert(item2).futureValue

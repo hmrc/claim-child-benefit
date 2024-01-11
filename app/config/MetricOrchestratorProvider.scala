@@ -16,12 +16,12 @@
 
 package config
 
-import com.kenshoo.play.metrics.Metrics
 import models.dmsa.SubmissionItemStatus
 import play.api.Configuration
 import repositories.SubmissionItemRepository
 import uk.gov.hmrc.mongo.lock.{LockService, MongoLockRepository}
 import uk.gov.hmrc.mongo.metrix.{MetricOrchestrator, MetricRepository, MetricSource}
+import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 import javax.inject.{Inject, Provider, Singleton}
 import scala.concurrent.duration.Duration

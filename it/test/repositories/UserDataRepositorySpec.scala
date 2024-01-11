@@ -19,13 +19,14 @@ package repositories
 import com.fasterxml.jackson.core.JsonParseException
 import config.AppConfig
 import models.{Done, UserData}
-import org.mockito.MockitoSugar
+import org.mockito.Mockito.when
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.model.Filters
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.Configuration
 import play.api.libs.json.Json
 import uk.gov.hmrc.crypto.{Decrypter, Encrypter, SymmetricCryptoFactory}

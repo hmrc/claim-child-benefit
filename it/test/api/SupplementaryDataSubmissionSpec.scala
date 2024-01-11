@@ -16,10 +16,10 @@
 
 package api
 
-import akka.actor.ActorSystem
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
 import models.dmsa.{SubmissionItem, SubmissionItemStatus, SubmissionResponse}
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import org.scalatest.concurrent.Eventually.eventually
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}

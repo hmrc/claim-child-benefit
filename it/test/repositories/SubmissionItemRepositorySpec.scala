@@ -26,9 +26,10 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.time.{Seconds, Span}
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import play.api.{Configuration, Environment}
+import repositories.SubmissionItemRepository.NothingToUpdateException
+import util.MutableClock
 import uk.gov.hmrc.crypto.{Decrypter, Encrypter, SymmetricCryptoFactory}
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
-import util.MutableClock
 
 import java.time.temporal.ChronoUnit
 import java.time.{Duration, Instant, LocalDate}
@@ -137,7 +138,7 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
 
     "must fail if no record exists" in {
       repository.insert(item).futureValue
-      repository.update("foobar", SubmissionItemStatus.Submitted, failureReason = Some("failure")).failed.futureValue mustEqual SubmissionItemRepository.NothingToUpdateException
+      repository.update("foobar", SubmissionItemStatus.Submitted, failureReason = Some("failure")).failed.futureValue mustEqual NothingToUpdateException
     }
 
     "must remove failure reason if it's passed as `None`" in {

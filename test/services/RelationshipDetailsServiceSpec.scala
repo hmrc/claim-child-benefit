@@ -18,13 +18,14 @@ package services
 
 import connectors.RelationshipDetailsConnector
 import models.{Done, Relationship, RelationshipDetails, RelationshipSource, RelationshipType, Relationships}
-import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchersSugar.eqTo
-import org.mockito.{Mockito, MockitoSugar}
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.Mockito
+import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status.{BAD_GATEWAY, GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
