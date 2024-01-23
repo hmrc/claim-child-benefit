@@ -16,18 +16,20 @@
 
 package services
 
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
 import better.files.File
 import connectors.SdesConnector
 import models.Done
 import models.dmsa.{Metadata, ObjectSummary, SubmissionItem, SubmissionItemStatus}
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
+import org.mockito.Mockito._
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.{ArgumentCaptor, Mockito, MockitoSugar}
+import org.mockito.{ArgumentCaptor, Mockito}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import repositories.SubmissionItemRepository

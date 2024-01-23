@@ -17,7 +17,6 @@
 package controllers
 
 import com.codahale.metrics.{MetricRegistry, Timer}
-import com.kenshoo.play.metrics.Metrics
 import controllers.SdesCallbackController.SubmissionLockedException
 import models.dmsa.{SubmissionItem, SubmissionItemStatus}
 import models.sdes.{NotificationCallback, NotificationType}
@@ -26,6 +25,7 @@ import play.api.{Configuration, Logging}
 import repositories.SubmissionItemRepository
 import services.{AuditService, RetryService}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendBaseController
+import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 import java.time.{Clock, Duration}
 import javax.inject.{Inject, Singleton}

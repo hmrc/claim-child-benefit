@@ -18,12 +18,12 @@ package services
 
 import connectors.IndividualDetailsConnector
 import models.{Country, DesignatoryDetails, Done}
-import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchersSugar.eqTo
-import org.mockito.MockitoSugar
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.Mockito._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status.{BAD_GATEWAY, GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE}
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder

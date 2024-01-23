@@ -17,12 +17,12 @@
 package repositories
 
 import models.{Done, RelationshipDetails, RelationshipDetailsCacheItem, Relationships}
-import org.mockito.MockitoSugar
 import org.mongodb.scala.model.Filters
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.mongo.MongoComponent

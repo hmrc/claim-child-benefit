@@ -18,9 +18,9 @@ package services
 
 import better.files.File
 import com.codahale.metrics.{Gauge, MetricRegistry}
-import com.kenshoo.play.metrics.Metrics
 import logging.Logging
 import play.api.Configuration
+import uk.gov.hmrc.play.bootstrap.metrics.Metrics
 
 import javax.inject.{Inject, Singleton}
 

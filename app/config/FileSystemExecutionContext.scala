@@ -16,10 +16,10 @@
 
 package config
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import play.api.libs.concurrent.CustomExecutionContext
 
-import javax.inject.{Singleton, Inject}
+import javax.inject.{Inject, Singleton}
 
 @Singleton
 class FileSystemExecutionContext @Inject()(actorSystem: ActorSystem) extends CustomExecutionContext(actorSystem, "file-system-executor")

@@ -19,12 +19,13 @@ package services
 import models.audit.{SupplementaryDataResultEvent, SupplementaryDataSubmittedEvent}
 import models.dmsa.{Metadata, ObjectSummary, SubmissionItem, SubmissionItemStatus}
 import models.sdes.{NotificationCallback, NotificationType}
-import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchersSugar.eqTo
-import org.mockito.{Mockito, MockitoSugar}
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.Mockito
+import org.mockito.Mockito._
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import uk.gov.hmrc.http.HeaderCarrier

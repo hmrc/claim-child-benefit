@@ -18,13 +18,14 @@ package controllers
 
 import better.files.{Resource => _, _}
 import models.dmsa.{Metadata, SubmissionResponse}
-import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchersSugar.eqTo
-import org.mockito.{ArgumentCaptor, Mockito, MockitoSugar}
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.{ArgumentCaptor, Mockito}
+import org.mockito.Mockito._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
+import org.scalatestplus.mockito.MockitoSugar
 import play.api.http.Status.ACCEPTED
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -45,7 +46,6 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 import scala.concurrent.ExecutionContext.global
 import scala.concurrent.Future
-
 import scala.language.existentials
 
 class SupplementaryDataControllerSpec extends AnyFreeSpec with Matchers with ScalaFutures with OptionValues with MockitoSugar with BeforeAndAfterEach {

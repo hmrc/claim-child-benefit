@@ -18,12 +18,13 @@ package repositories
 
 import config.AppConfig
 import models.{DesignatoryDetails, DesignatoryDetailsCacheItem, Done, Name}
-import org.mockito.MockitoSugar
+import org.mockito.Mockito.when
 import org.mongodb.scala.model.Filters
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 import utils.NinoGenerator
 
