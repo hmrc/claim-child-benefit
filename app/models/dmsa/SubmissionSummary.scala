@@ -25,7 +25,8 @@ final case class SubmissionSummary(
                                     id: String,
                                     status: SubmissionItemStatus,
                                     failureReason: Option[String],
-                                    lastUpdated: Instant
+                                    lastUpdated: Instant,
+                                    retries: Option[Int]
                                   )
 
 object SubmissionSummary {
@@ -35,7 +36,8 @@ object SubmissionSummary {
       id = submissionItem.id,
       status = submissionItem.status,
       failureReason = submissionItem.failureReason,
-      lastUpdated = submissionItem.lastUpdated
+      lastUpdated = submissionItem.lastUpdated,
+      retries = submissionItem.retries
     )
 
   implicit lazy val format: OFormat[SubmissionSummary] = {
