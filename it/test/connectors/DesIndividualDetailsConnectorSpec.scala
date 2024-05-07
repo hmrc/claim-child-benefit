@@ -28,18 +28,19 @@ import play.api.http.Status.{INTERNAL_SERVER_ERROR, OK}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
-import util.WireMockHelper
+import uk.gov.hmrc.http.test.WireMockSupport
 import utils.NinoGenerator
 
 import java.time.LocalDate
 import java.util.UUID
 
-class DesIndividualDetailsConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with IntegrationPatience with WireMockHelper {
+class DesIndividualDetailsConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with IntegrationPatience with WireMockSupport {
 
   private lazy val app: Application =
     GuiceApplicationBuilder()
       .configure(
-        "microservice.services.des.port" -> server.port(),
+        "microservice.services.des.port" -> wireMockPort,
+        "microservice.services.internal-auth.port" -> wireMockPort,
         "microservice.services.des.auth" -> "api-key",
         "microservice.services.des.originator-id" -> "originator-id",
         "microservice.services.des.environment" -> "env",
@@ -88,7 +89,7 @@ class DesIndividualDetailsConnectorSpec extends AnyFreeSpec with Matchers with S
       val url = s"/individuals/details/$nino/Y"
       val correlationId = UUID.randomUUID().toString
 
-        server.stubFor(
+        wireMockServer.stubFor(
         get(urlPathEqualTo(url))
           .withHeader(HeaderNames.AUTHORIZATION, equalTo("Bearer api-key"))
           .withHeader("CorrelationId", equalTo(correlationId))
@@ -109,7 +110,7 @@ class DesIndividualDetailsConnectorSpec extends AnyFreeSpec with Matchers with S
       val nino = NinoGenerator.randomNino()
       val url = s"/individuals/details/$nino/Y"
 
-      server.stubFor(
+      wireMockServer.stubFor(
         get(urlPathEqualTo(url))
           .withHeader(HeaderNames.AUTHORIZATION, equalTo("Bearer api-key"))
           .willReturn(
@@ -126,7 +127,7 @@ class DesIndividualDetailsConnectorSpec extends AnyFreeSpec with Matchers with S
       val nino = NinoGenerator.randomNino()
       val url = s"/individuals/details/$nino/Y"
 
-      server.stubFor(
+      wireMockServer.stubFor(
         get(urlPathEqualTo(url))
           .withHeader(HeaderNames.AUTHORIZATION, equalTo("Bearer api-key"))
           .willReturn(

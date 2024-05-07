@@ -26,16 +26,17 @@ import play.api.http.Status.{CREATED, INTERNAL_SERVER_ERROR, UNPROCESSABLE_ENTIT
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
-import util.WireMockHelper
+import uk.gov.hmrc.http.test.WireMockSupport
 
-class CbsProxyConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with IntegrationPatience with WireMockHelper {
+class CbsProxyConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with IntegrationPatience with WireMockSupport {
 
   private lazy val app: Application =
     GuiceApplicationBuilder()
       .configure(
-        "microservice.services.cbs.port" -> server.port(),
+        "microservice.services.cbs.port" -> wireMockPort,
         "microservice.services.cbs.environment" -> "env",
-        "microservice.services.cbs.auth" -> "auth"
+        "microservice.services.cbs.auth" -> "auth",
+        "microservice.services.internal-auth.port" -> wireMockPort
       )
       .build()
 
@@ -52,7 +53,7 @@ class CbsProxyConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures 
 
         val body = Json.obj("foo" -> "bar")
 
-        server.stubFor(
+        wireMockServer.stubFor(
           post(urlMatching(url))
             .withRequestBody(equalToJson(Json.stringify(Json.obj())))
             .withHeader("Environment", equalTo("env"))
@@ -74,7 +75,7 @@ class CbsProxyConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures 
 
     "must fail when there is a connection error" in {
 
-      server.stubFor(
+      wireMockServer.stubFor(
         post(urlMatching(url))
           .withRequestBody(equalToJson(Json.stringify(Json.obj())))
           .withHeader("Environment", equalTo("env"))

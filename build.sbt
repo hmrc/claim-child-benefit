@@ -29,24 +29,19 @@ lazy val microservice = Project("claim-child-benefit", file("."))
       "java.time.LocalDate"
     )
   )
-  .settings(inConfig(Test)(testSettings): _*)
+  .settings(inConfig(Test)(testSettings) *)
   .settings(resolvers += Resolver.jcenterRepo)
-  .settings(CodeCoverageSettings.settings: _*)
+  .settings(CodeCoverageSettings.settings *)
   .settings(PlayKeys.playDefaultPort := 11305)
 
-lazy val testSettings: Seq[Def.Setting[_]] = Seq(
+lazy val testSettings: Seq[Def.Setting[?]] = Seq(
+  parallelExecution := true,
+  fork := true,
   unmanagedSourceDirectories += baseDirectory.value / "test-utils" / "src",
   unmanagedResourceDirectories += baseDirectory.value / "test-utils" / "resources"
 )
 
-lazy val itSettings: Seq[Def.Setting[_]] = Seq(
-  unmanagedSourceDirectories += baseDirectory.value / "test-utils" / "src",
-  unmanagedResourceDirectories += baseDirectory.value / "test-utils" / "resources",
-  unmanagedResourceDirectories += baseDirectory.value / "it" / "resources"
-)
-
-
 lazy val it = project
   .enablePlugins(PlayScala)
   .dependsOn(microservice % "test->test") // the "test->test" allows reusing test code and test dependencies
-  .settings(DefaultBuildSettings.itSettings())
+  .settings(inConfig(Test)(testSettings) *)

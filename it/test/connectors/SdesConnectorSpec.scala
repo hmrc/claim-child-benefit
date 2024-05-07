@@ -27,14 +27,15 @@ import play.api.http.Status.{INTERNAL_SERVER_ERROR, NO_CONTENT}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
-import util.WireMockHelper
+import uk.gov.hmrc.http.test.WireMockSupport
 
-class SdesConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with IntegrationPatience with WireMockHelper {
+class SdesConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with IntegrationPatience with WireMockSupport {
 
   private lazy val app: Application =
     GuiceApplicationBuilder()
       .configure(
-        "microservice.services.sdes.port" -> server.port(),
+        "microservice.services.sdes.port" -> wireMockPort,
+        "microservice.services.internal-auth.port" -> wireMockPort,
         "microservice.services.sdes.path" -> "",
         "services.sdes.client-id" -> "client-id"
       )
@@ -62,7 +63,7 @@ class SdesConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with
 
     "must return Done when SDES responds with NO_CONTENT" in {
 
-      server.stubFor(
+      wireMockServer.stubFor(
         post(urlMatching(url))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(request))))
           .withHeader("x-client-id", equalTo("client-id"))
@@ -74,7 +75,7 @@ class SdesConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with
 
     "must return a failed future when SDES responds with anything else" in {
 
-      server.stubFor(
+      wireMockServer.stubFor(
         post(urlMatching(url))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(request))))
           .withHeader("x-client-id", equalTo("client-id"))
@@ -87,7 +88,7 @@ class SdesConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with
 
     "must return a failed future when there is a connection error" in {
 
-      server.stubFor(
+      wireMockServer.stubFor(
         post(urlMatching(url))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(request))))
           .withHeader("x-client-id", equalTo("client-id"))
@@ -101,7 +102,7 @@ class SdesConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with
 
       val app = GuiceApplicationBuilder()
         .configure(
-          "microservice.services.sdes.port" -> server.port(),
+          "microservice.services.sdes.port" -> wireMockPort,
           "microservice.services.sdes.path" -> "sdes-stub",
           "services.sdes.client-id" -> "client-id"
         )
@@ -109,7 +110,7 @@ class SdesConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with
 
       val connector = app.injector.instanceOf[SdesConnector]
 
-      server.stubFor(
+      wireMockServer.stubFor(
         post(urlMatching(s"/sdes-stub$url"))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(request))))
           .withHeader("x-client-id", equalTo("client-id"))

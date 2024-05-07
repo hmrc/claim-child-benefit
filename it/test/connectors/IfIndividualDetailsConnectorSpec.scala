@@ -28,18 +28,19 @@ import play.api.http.Status.{INTERNAL_SERVER_ERROR, OK}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
-import util.WireMockHelper
+import uk.gov.hmrc.http.test.WireMockSupport
 import utils.NinoGenerator
 
 import java.time.LocalDate
 import java.util.UUID
 
-class IfIndividualDetailsConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with IntegrationPatience with WireMockHelper {
+class IfIndividualDetailsConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with IntegrationPatience with WireMockSupport {
 
   private lazy val app: Application =
     GuiceApplicationBuilder()
       .configure(
-        "microservice.services.integration-framework.port" -> server.port(),
+        "microservice.services.integration-framework.port" -> wireMockPort,
+        "microservice.services.internal-auth.port" -> wireMockPort,
         "microservice.services.integration-framework.auth" -> "api-key",
         "microservice.services.integration-framework.originator-id" -> "originator-id",
         "microservice.services.integration-framework.environment" -> "env"
@@ -87,7 +88,7 @@ class IfIndividualDetailsConnectorSpec extends AnyFreeSpec with Matchers with Sc
       val url = s"/individuals/details/NINO/$nino"
       val correlationId = UUID.randomUUID().toString
 
-        server.stubFor(
+        wireMockServer.stubFor(
         get(urlPathEqualTo(url))
           .withHeader(HeaderNames.AUTHORIZATION, equalTo("api-key"))
           .withHeader("CorrelationId", equalTo(correlationId))
@@ -108,7 +109,7 @@ class IfIndividualDetailsConnectorSpec extends AnyFreeSpec with Matchers with Sc
       val nino = NinoGenerator.randomNino()
       val url = s"/individuals/details/NINO/$nino"
 
-      server.stubFor(
+      wireMockServer.stubFor(
         get(urlPathEqualTo(url))
           .withHeader(HeaderNames.AUTHORIZATION, equalTo("api-key"))
           .willReturn(
@@ -125,7 +126,7 @@ class IfIndividualDetailsConnectorSpec extends AnyFreeSpec with Matchers with Sc
       val nino = NinoGenerator.randomNino()
       val url = s"/individuals/details/NINO/$nino"
 
-      server.stubFor(
+      wireMockServer.stubFor(
         get(urlPathEqualTo(url))
           .withHeader(HeaderNames.AUTHORIZATION, equalTo("api-key"))
           .willReturn(
