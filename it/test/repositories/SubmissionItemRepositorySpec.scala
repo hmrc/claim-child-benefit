@@ -430,7 +430,7 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
     }
 
     "must fail when there is no item with the given id" in {
-      repository.retry(UUID.randomUUID().toString).failed.futureValue
+      repository.retry(UUID.randomUUID().toString).failed.futureValue.getMessage mustEqual "Unable to find submission item"
     }
   }
 
