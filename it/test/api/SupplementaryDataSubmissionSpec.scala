@@ -16,6 +16,7 @@
 
 package api
 
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, post, urlMatching}
 import models.dmsa.{SubmissionItem, SubmissionItemStatus, SubmissionResponse}
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.scaladsl.Source
@@ -38,6 +39,7 @@ import play.api.mvc.MultipartFormData.{DataPart, FilePart}
 import play.api.test.Helpers.AUTHORIZATION
 import play.api.test.RunningServer
 import repositories.SubmissionItemRepository
+import uk.gov.hmrc.http.test.WireMockSupport
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 import utils.NinoGenerator
@@ -47,7 +49,16 @@ import java.time.temporal.ChronoUnit
 import java.time.{Instant, LocalDateTime, ZoneOffset}
 import java.util.UUID
 
-class SupplementaryDataSubmissionSpec extends AnyFreeSpec with Matchers with DefaultPlayMongoRepositorySupport[SubmissionItem] with ScalaFutures with IntegrationPatience with BeforeAndAfterEach with GuiceOneServerPerSuite with OptionValues {
+class SupplementaryDataSubmissionSpec
+  extends AnyFreeSpec
+    with Matchers
+    with DefaultPlayMongoRepositorySupport[SubmissionItem]
+    with ScalaFutures
+    with IntegrationPatience
+    with BeforeAndAfterEach
+    with GuiceOneServerPerSuite
+    with OptionValues
+    with WireMockSupport {
 
   private implicit val actorSystem: ActorSystem = ActorSystem()
   private val httpClient: StandaloneAhcWSClient = StandaloneAhcWSClient()
@@ -68,7 +79,8 @@ class SupplementaryDataSubmissionSpec extends AnyFreeSpec with Matchers with Def
     )
     .build()
 
-  override protected lazy val repository: SubmissionItemRepository = app.injector.instanceOf[SubmissionItemRepository]
+  override protected lazy val repository: SubmissionItemRepository =
+    app.injector.instanceOf[SubmissionItemRepository]
 
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -95,6 +107,11 @@ class SupplementaryDataSubmissionSpec extends AnyFreeSpec with Matchers with Def
     val submissionDate = Instant.now().truncatedTo(ChronoUnit.SECONDS)
     val submissionDateString = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.ofInstant(submissionDate, ZoneOffset.UTC))
     val correlationId = UUID.randomUUID().toString
+
+    wireMockServer.stubFor(
+      post(urlMatching("/callback"))
+        .willReturn(aResponse().withStatus(OK))
+    )
 
     val response = httpClient.url(s"http://localhost:$port/claim-child-benefit/supplementary-data")
       .withHttpHeaders(

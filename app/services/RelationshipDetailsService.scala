@@ -44,7 +44,7 @@ class RelationshipDetailsService @Inject()(
                 .recover {
                   case e: Exception =>
                     logger.warn("Error caching relationship details")
-                    logger.debug("Error caching relationship details", e.getMessage)
+                    logger.debug(s"Error caching relationship details: ${e.getMessage}")
                     result
                 }
           }
@@ -55,7 +55,6 @@ class RelationshipDetailsService @Inject()(
     retryService.retry(
       connector.getRelationships(nino),
       delay = 1.second,
-      backoff = RetryService.BackoffStrategy.exponential,
       maxAttempts = 3,
       retriable = shouldRetry
     )

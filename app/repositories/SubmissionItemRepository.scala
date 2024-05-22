@@ -16,7 +16,7 @@
 
 package repositories
 
-import models.Done
+import org.apache.pekko.Done
 import models.dmsa.{DailySummary, ListResult, QueryResult, SubmissionItem, SubmissionItemStatus}
 import org.bson.conversions.Bson
 import org.mongodb.scala.model.{Aggregates, Facet, Filters, FindOneAndUpdateOptions, IndexModel, IndexOptions, Indexes, ReturnDocument, Sorts, Updates}

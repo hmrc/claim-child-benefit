@@ -16,7 +16,6 @@
 
 package config
 
-import cats.effect.unsafe.IORuntime
 import connectors.{DesIndividualDetailsConnector, IfIndividualDetailsConnector, IndividualDetailsConnector}
 import play.api.inject.Binding
 import play.api.{Configuration, Environment}
@@ -52,7 +51,6 @@ class Module extends play.api.inject.Module {
     Seq(
       bind[AppConfig].toSelf.eagerly(),
       bind[Clock].toInstance(Clock.systemUTC()),
-      bind[IORuntime].toProvider[IORuntimeProvider],
       bind[Encrypter with Decrypter].toProvider[CryptoProvider],
       bind[MetricOrchestrator].toProvider[MetricOrchestratorProvider].eagerly(),
       bind[FileSystemMetricsService].toSelf.eagerly(),

@@ -72,7 +72,7 @@ class DesignatoryDetailsService @Inject() (
               .map(_ => details)
               .recover {
                 case e: Exception =>
-                  logger.debug("Error caching designatory details", e.getMessage)
+                  logger.debug(s"Error caching designatory details: ${e.getMessage}")
                   logger.warn("Error caching designatory details")
                   details
               }
@@ -84,7 +84,6 @@ class DesignatoryDetailsService @Inject() (
     retryService.retry(
       connector.getDesignatoryDetails(nino),
       delay = 1.second,
-      backoff = RetryService.BackoffStrategy.exponential,
       maxAttempts = 3,
       retriable = shouldRetry
     )

@@ -16,7 +16,8 @@
 
 package repositories
 
-import models.{Done, RelationshipDetails, RelationshipDetailsCacheItem, Relationships}
+import models.{RelationshipDetails, RelationshipDetailsCacheItem, Relationships}
+import org.apache.pekko.Done
 import org.mongodb.scala.model.Filters
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}

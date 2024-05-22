@@ -17,7 +17,7 @@
 package connectors
 
 import config.Service
-import models.Done
+import org.apache.pekko.Done
 import models.sdes.FileNotifyRequest
 import play.api.Configuration
 import play.api.http.Status.NO_CONTENT

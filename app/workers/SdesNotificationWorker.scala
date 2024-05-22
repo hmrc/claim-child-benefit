@@ -16,25 +16,34 @@
 
 package workers
 
+import org.apache.pekko.actor.{ActorSystem, Scheduler}
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
-import services.{SchedulerService, SdesService}
+import services.SdesService
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SdesNotificationWorker @Inject()(
                                         configuration: Configuration,
                                         sdesService: SdesService,
-                                        schedulerService: SchedulerService,
-                                        lifecycle: ApplicationLifecycle
-                                      ) {
+                                        lifecycle: ApplicationLifecycle,
+                                        actorSystem: ActorSystem
+                                      )(implicit ec: ExecutionContext) {
+  private val scheduler: Scheduler =
+    actorSystem.scheduler
 
-  private val interval = configuration.get[FiniteDuration]("workers.sdes-notification-worker.interval")
-  private val initialDelay = configuration.get[FiniteDuration]("workers.initial-delay")
+  private val interval: FiniteDuration =
+    configuration.get[FiniteDuration]("workers.sdes-notification-worker.interval")
 
-  private val (_, cancel) = schedulerService.schedule(interval, initialDelay)(sdesService.notifySubmittedItems())
+  private val initialDelay: FiniteDuration =
+    configuration.get[FiniteDuration]("workers.initial-delay")
 
-  lifecycle.addStopHook(cancel)
+  private val cancel = scheduler.scheduleWithFixedDelay(interval, initialDelay) { () =>
+    sdesService.notifySubmittedItems()
+  }
+
+  lifecycle.addStopHook(() => Future.successful(cancel.cancel()))
 }

@@ -18,7 +18,8 @@ package repositories
 
 import com.fasterxml.jackson.core.JsonParseException
 import config.AppConfig
-import models.{Done, UserData}
+import models.UserData
+import org.apache.pekko.Done
 import org.mockito.Mockito.when
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.model.Filters

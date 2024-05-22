@@ -17,7 +17,8 @@
 package services
 
 import connectors.RelationshipDetailsConnector
-import models.{Done, Relationship, RelationshipDetails, RelationshipSource, RelationshipType, Relationships}
+import models.{Relationship, RelationshipDetails, RelationshipSource, RelationshipType, Relationships}
+import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito
 import org.mockito.Mockito._

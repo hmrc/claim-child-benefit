@@ -17,7 +17,8 @@
 package repositories
 
 import config.AppConfig
-import models.{DesignatoryDetails, DesignatoryDetailsCacheItem, Done, Name}
+import models.{DesignatoryDetails, DesignatoryDetailsCacheItem, Name}
+import org.apache.pekko.Done
 import org.mockito.Mockito.when
 import org.mongodb.scala.model.Filters
 import org.scalatest.OptionValues

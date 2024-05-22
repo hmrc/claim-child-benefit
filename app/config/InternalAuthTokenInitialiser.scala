@@ -16,12 +16,12 @@
 
 package config
 
-import models.Done
-import play.api.{Configuration, Logging}
+import org.apache.pekko.Done
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
-import uk.gov.hmrc.http.client.HttpClientV2
+import play.api.{Configuration, Logging}
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.duration.DurationInt
@@ -32,7 +32,7 @@ abstract class InternalAuthTokenInitialiser {
 }
 
 @Singleton
-class NoOpInternalAuthTokenInitialiser @Inject() () extends InternalAuthTokenInitialiser {
+class NoOpInternalAuthTokenInitialiser @Inject() extends InternalAuthTokenInitialiser {
   override val initialised: Future[Done] = Future.successful(Done)
 }
 

@@ -17,7 +17,8 @@
 package repositories
 
 import config.AppConfig
-import models.{Done, RelationshipDetails, RelationshipDetailsCacheItem}
+import models.{RelationshipDetails, RelationshipDetailsCacheItem}
+import org.apache.pekko.Done
 import org.mongodb.scala.model._
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository

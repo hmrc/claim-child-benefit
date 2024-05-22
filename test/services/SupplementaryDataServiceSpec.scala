@@ -18,7 +18,7 @@ package services
 
 import better.files.File
 import connectors.SdesConnector
-import models.Done
+import org.apache.pekko.Done
 import models.dmsa.{Metadata, ObjectSummary, SubmissionItem, SubmissionItemStatus}
 import org.apache.pekko.stream.scaladsl.Source
 import org.apache.pekko.util.ByteString

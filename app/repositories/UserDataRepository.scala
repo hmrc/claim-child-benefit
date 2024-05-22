@@ -17,7 +17,8 @@
 package repositories
 
 import config.AppConfig
-import models.{Done, UserData}
+import models.UserData
+import org.apache.pekko.Done
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import play.api.libs.json.Format

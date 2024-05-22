@@ -18,7 +18,7 @@ package services
 
 import better.files.File
 import config.FileSystemExecutionContext
-import org.apache.pdfbox.pdmodel.PDDocument
+import org.apache.pdfbox.Loader
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
@@ -27,7 +27,7 @@ import scala.concurrent.Future
 class PdfService @Inject() ()(implicit ec: FileSystemExecutionContext) {
 
   def getPdf(file: File): Future[File] = Future {
-    val document = PDDocument.load(file.path.toFile)
+    val document = Loader.loadPDF(file.path.toFile)
     try {
       file
     } finally {

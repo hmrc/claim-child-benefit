@@ -16,7 +16,6 @@
 
 package repositories
 
-import cats.implicits.toTraverseOps
 import models.dmsa._
 import org.scalatest.concurrent.Eventually.eventually
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
@@ -27,9 +26,9 @@ import org.scalatest.time.{Seconds, Span}
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import play.api.{Configuration, Environment}
 import repositories.SubmissionItemRepository.NothingToUpdateException
-import util.MutableClock
 import uk.gov.hmrc.crypto.{Decrypter, Encrypter, SymmetricCryptoFactory}
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
+import util.MutableClock
 
 import java.time.temporal.ChronoUnit
 import java.time.{Duration, Instant, LocalDate}
@@ -274,23 +273,21 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
   "dailySummaries" - {
 
     "must return a summary for every day where there are records" in {
+      for {
+        _ <- repository.insert(randomItem.copy(status = SubmissionItemStatus.Completed, created = clock.instant()))
+        _ <- repository.insert(randomItem.copy(status = SubmissionItemStatus.Completed, created = clock.instant()))
+        _ <- repository.insert(randomItem.copy(status = SubmissionItemStatus.Failed, created = clock.instant()))
+        _ <- repository.insert(randomItem.copy(status = SubmissionItemStatus.Submitted, created = clock.instant()))
+        _ <- repository.insert(randomItem.copy(status = SubmissionItemStatus.Forwarded, created = clock.instant()))
+        _ <- repository.insert(randomItem.copy(status = SubmissionItemStatus.Completed, created = clock.instant().minus(Duration.ofDays(10))))
+      } yield {
+        val result = repository.dailySummaries.futureValue
 
-      List(
-        randomItem.copy(status = SubmissionItemStatus.Completed, created = clock.instant()),
-        randomItem.copy(status = SubmissionItemStatus.Completed, created = clock.instant()),
-        randomItem.copy(status = SubmissionItemStatus.Failed, created = clock.instant()),
-        randomItem.copy(status = SubmissionItemStatus.Submitted, created = clock.instant()),
-        randomItem.copy(status = SubmissionItemStatus.Forwarded, created = clock.instant()),
-        randomItem.copy(status = SubmissionItemStatus.Completed, created = clock.instant().minus(Duration.ofDays(10)))
-      ).traverse(repository.insert)
-        .futureValue
-
-      val result = repository.dailySummaries.futureValue
-
-      result must contain theSameElementsAs List(
-        DailySummary(date = LocalDate.now(clock), submitted = 1, forwarded = 1, failed = 1, completed = 2),
-        DailySummary(date = LocalDate.now(clock).minusDays(10), submitted = 0, forwarded = 0, failed = 0, completed = 1)
-      )
+        result must contain theSameElementsAs List(
+          DailySummary(date = LocalDate.now(clock), submitted = 1, forwarded = 1, failed = 1, completed = 2),
+          DailySummary(date = LocalDate.now(clock).minusDays(10), submitted = 0, forwarded = 0, failed = 0, completed = 1)
+        )
+      }
     }
   }
 
@@ -314,11 +311,14 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
       val item1 = item.copy(id = "id1", sdesCorrelationId = "correlationId1", status = SubmissionItemStatus.Failed)
       val item2 = item.copy(id = "id2", sdesCorrelationId = "correlationId2")
 
-      List(item1, item2).traverse(insert).futureValue
-
-      val result = repository.list(status = Some(SubmissionItemStatus.Failed)).futureValue
-      result.summaries must contain only SubmissionSummary(item1)
-      result.totalCount mustEqual 1
+      for {
+        _ <- repository.insert(item1)
+        _ <- repository.insert(item2)
+      } yield {
+        val result = repository.list(status = Some(SubmissionItemStatus.Failed)).futureValue
+        result.summaries must contain only SubmissionSummary(item1)
+        result.totalCount mustEqual 1
+      }
     }
 
     "must return a list of items filtered by the day the item was created" in {
@@ -326,26 +326,30 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
       val item1 = item.copy(id = "id1", sdesCorrelationId = "correlationId1", created = clock.instant())
       val item2 = item.copy(id = "id2", sdesCorrelationId = "correlationId2", created = clock.instant().minus(Duration.ofDays(1)))
 
-      List(item1, item2).traverse(insert).futureValue
-
-      val result = repository.list(created = Some(LocalDate.now(clock))).futureValue
-      result.summaries must contain only SubmissionSummary(item1)
-      result.totalCount mustEqual 1
+      for {
+        _ <- repository.insert(item1)
+        _ <- repository.insert(item2)
+      } yield {
+        val result = repository.list(created = Some(LocalDate.now(clock))).futureValue
+        result.summaries must contain only SubmissionSummary(item1)
+        result.totalCount mustEqual 1
+      }
     }
 
     "must apply all filters" in {
 
       val item1 = randomItem.copy(created = clock.instant().minus(Duration.ofDays(2)), status = SubmissionItemStatus.Completed)
 
-      List(
-        item1,
-        randomItem.copy(created = clock.instant(), status = SubmissionItemStatus.Completed),
-        randomItem.copy(created = clock.instant().minus(Duration.ofDays(2)), status = SubmissionItemStatus.Forwarded),
-      ).traverse(insert).futureValue
+      for {
+        _ <- repository.insert(item1)
+        _ <- repository.insert(randomItem.copy(created = clock.instant(), status = SubmissionItemStatus.Completed))
+        _ <- repository.insert(randomItem.copy(created = clock.instant().minus(Duration.ofDays(2)), status = SubmissionItemStatus.Forwarded))
+      } yield {
+        val result = repository.list(created = Some(LocalDate.now(clock).minusDays(2)), status = Some(SubmissionItemStatus.Completed)).futureValue
+        result.summaries must contain only SubmissionSummary(item1)
+        result.totalCount mustEqual 1
+      }
 
-      val result = repository.list(created = Some(LocalDate.now(clock).minusDays(2)), status = Some(SubmissionItemStatus.Completed)).futureValue
-      result.summaries must contain only SubmissionSummary(item1)
-      result.totalCount mustEqual 1
     }
 
     "must limit the number of items to the supplied limit" in {
@@ -354,11 +358,14 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
       clock.advance(Duration.ofMinutes(1))
       val item2 = randomItem.copy(created = clock.instant())
 
-      List(item1, item2).traverse(insert).futureValue
-
-      val result = repository.list(limit = 1).futureValue
-      result.summaries must contain only SubmissionSummary(item2)
-      result.totalCount mustEqual 2
+      for {
+        _ <- repository.insert(item1)
+        _ <- repository.insert(item2)
+      } yield {
+        val result = repository.list(limit = 1).futureValue
+        result.summaries must contain only SubmissionSummary(item2)
+        result.totalCount mustEqual 2
+      }
     }
 
     "must return items offset by the offset" in {
@@ -367,11 +374,14 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
       clock.advance(Duration.ofMinutes(1))
       val item2 = randomItem.copy(created = clock.instant())
 
-      List(item1, item2).traverse(insert).futureValue
-
-      val result = repository.list(limit = 1, offset = 1).futureValue
-      result.summaries must contain only SubmissionSummary(item1)
-      result.totalCount mustEqual 2
+      for {
+        _ <- repository.insert(item1)
+        _ <- repository.insert(item2)
+      } yield {
+        val result = repository.list(limit = 1, offset = 1).futureValue
+        result.summaries must contain only SubmissionSummary(item1)
+        result.totalCount mustEqual 2
+      }
     }
   }
 
@@ -390,14 +400,19 @@ class SubmissionItemRepositorySpec extends AnyFreeSpec
       repository.countByStatus(SubmissionItemStatus.Completed).futureValue mustEqual 0
       repository.countByStatus(SubmissionItemStatus.Forwarded).futureValue mustEqual 0
 
-      List(item1, item2, item3, item4, item5)
-        .traverse(repository.insert)
-        .futureValue
+      for {
+        _ <- repository.insert(item1)
+        _ <- repository.insert(item2)
+        _ <- repository.insert(item3)
+        _ <- repository.insert(item4)
+        _ <- repository.insert(item5)
+      } yield {
 
-      repository.countByStatus(SubmissionItemStatus.Submitted).futureValue mustEqual 2
-      repository.countByStatus(SubmissionItemStatus.Failed).futureValue mustEqual 1
-      repository.countByStatus(SubmissionItemStatus.Completed).futureValue mustEqual 1
-      repository.countByStatus(SubmissionItemStatus.Forwarded).futureValue mustEqual 1
+        repository.countByStatus(SubmissionItemStatus.Submitted).futureValue mustEqual 2
+        repository.countByStatus(SubmissionItemStatus.Failed).futureValue mustEqual 1
+        repository.countByStatus(SubmissionItemStatus.Completed).futureValue mustEqual 1
+        repository.countByStatus(SubmissionItemStatus.Forwarded).futureValue mustEqual 1
+      }
     }
   }
 

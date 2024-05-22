@@ -2,8 +2,8 @@ import play.sbt.routes.RoutesKeys
 import uk.gov.hmrc.DefaultBuildSettings
 import uk.gov.hmrc.DefaultBuildSettings.targetJvm
 
-ThisBuild / majorVersion        := 0
-ThisBuild / scalaVersion        := "2.13.12"
+ThisBuild / majorVersion := 0
+ThisBuild / scalaVersion := "2.13.12"
 
 lazy val microservice = Project("claim-child-benefit", file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin, BuildInfoPlugin)
@@ -35,8 +35,6 @@ lazy val microservice = Project("claim-child-benefit", file("."))
   .settings(PlayKeys.playDefaultPort := 11305)
 
 lazy val testSettings: Seq[Def.Setting[?]] = Seq(
-  parallelExecution := true,
-  fork := true,
   unmanagedSourceDirectories += baseDirectory.value / "test-utils" / "src",
   unmanagedResourceDirectories += baseDirectory.value / "test-utils" / "resources"
 )
@@ -44,4 +42,6 @@ lazy val testSettings: Seq[Def.Setting[?]] = Seq(
 lazy val it = project
   .enablePlugins(PlayScala)
   .dependsOn(microservice % "test->test") // the "test->test" allows reusing test code and test dependencies
-  .settings(inConfig(Test)(testSettings) *)
+  .settings(
+    DefaultBuildSettings.itSettings(false)
+  )

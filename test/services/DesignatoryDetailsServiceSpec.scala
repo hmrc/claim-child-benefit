@@ -17,7 +17,8 @@
 package services
 
 import connectors.IndividualDetailsConnector
-import models.{Country, DesignatoryDetails, Done}
+import models.{Country, DesignatoryDetails}
+import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}

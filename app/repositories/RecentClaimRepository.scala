@@ -17,7 +17,8 @@
 package repositories
 
 import config.AppConfig
-import models.{Done, RecentClaim}
+import models.RecentClaim
+import org.apache.pekko.Done
 import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes}
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
