@@ -16,31 +16,45 @@
 
 package health
 
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, urlMatching}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
+import play.api.http.Status.OK
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.WSClient
+import uk.gov.hmrc.http.test.WireMockSupport
 
 class HealthEndpointIntegrationSpec
   extends AnyWordSpec
      with Matchers
      with ScalaFutures
      with IntegrationPatience
-     with GuiceOneServerPerSuite {
+     with WireMockSupport {
 
-  private val wsClient = app.injector.instanceOf[WSClient]
-  private val baseUrl  = s"http://localhost:$port"
-
-  override def fakeApplication(): Application =
+  private lazy val app: Application =
     GuiceApplicationBuilder()
-      .configure("metrics.enabled" -> false)
-      .build()
+      .configure(
+        "metrics.enabled" -> false,
+        "microservice.services.internal-auth.port" -> wireMockServer.port()
+      ).build()
+
+  private lazy val wsClient = app.injector.instanceOf[WSClient]
+  private lazy val baseUrl  = s"http://localhost:${wireMockServer.port()}"
 
   "service health endpoint" should {
     "respond with 200 status" in {
+      wireMockServer.stubFor(
+        get(urlMatching("/test-only/token"))
+          .willReturn(aResponse().withStatus(OK))
+      )
+
+      wireMockServer.stubFor(
+        get(urlMatching("/ping/ping"))
+          .willReturn(aResponse().withStatus(OK))
+      )
+
       val response =
         wsClient
           .url(s"$baseUrl/ping/ping")

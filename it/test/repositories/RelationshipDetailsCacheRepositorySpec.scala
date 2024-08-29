@@ -25,6 +25,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import uk.gov.hmrc.http.test.WireMockSupport
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 import utils.NinoGenerator
@@ -44,17 +45,18 @@ class RelationshipDetailsCacheRepositorySpec
   private val instant = Instant.now.truncatedTo(ChronoUnit.MILLIS)
   private val stubClock: Clock = Clock.fixed(instant, ZoneId.systemDefault)
 
-  private val app = GuiceApplicationBuilder()
+  private lazy val app = GuiceApplicationBuilder()
     .overrides(
       bind[MongoComponent].toInstance(mongoComponent),
       bind[Clock].toInstance(stubClock)
     )
     .configure(
-      "mongodb.relationshipDetailsTtlInSeconds" -> 1
+      "mongodb.relationshipDetailsTtlInSeconds" -> 1,
+      "create-internal-auth-token-on-start" -> false
     )
     .build()
 
-  protected override val repository: RelationshipDetailsCacheRepository =
+  override protected lazy val repository: RelationshipDetailsCacheRepository =
     app.injector.instanceOf[RelationshipDetailsCacheRepository]
 
   ".set" - {

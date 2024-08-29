@@ -28,7 +28,7 @@ import play.api.http.Status.{INTERNAL_SERVER_ERROR, OK}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
-import util.WireMockHelper
+import uk.gov.hmrc.http.test.WireMockSupport
 import utils.NinoGenerator
 
 import java.util.UUID
@@ -38,19 +38,29 @@ class RelationshipDetailsConnectorSpec
     with Matchers
     with ScalaFutures
     with IntegrationPatience
-    with WireMockHelper {
+    with WireMockSupport {
 
   private lazy val app: Application =
     GuiceApplicationBuilder()
       .configure(
-        "microservice.services.relationship-details.port" -> server.port(),
+        "microservice.services.relationship-details.port" -> wireMockServer.port(),
         "microservice.services.relationship-details.auth" -> "api-key",
         "microservice.services.relationship-details.originator-id" -> "originator-id",
         "microservice.services.relationship-details.environment" -> "env",
+        "microservice.services.internal-auth.port" -> wireMockServer.port()
       )
       .build()
 
   private lazy val connector = app.injector.instanceOf[RelationshipDetailsConnector]
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+
+    wireMockServer.stubFor(
+      get(urlMatching("/test-only/token"))
+        .willReturn(aResponse().withStatus(OK))
+    )
+  }
 
   "getRelationships" - {
 
@@ -75,7 +85,7 @@ class RelationshipDetailsConnectorSpec
           )
         ))
 
-      server.stubFor(
+      wireMockServer.stubFor(
         get(urlPathEqualTo(url))
           .withHeader(HeaderNames.AUTHORIZATION, equalTo("Bearer api-key"))
           .withHeader("CorrelationId", equalTo(correlationId))
@@ -97,7 +107,7 @@ class RelationshipDetailsConnectorSpec
       val trimmedNino = nino.take(8)
       val url = s"/individuals/relationship/$trimmedNino"
 
-      server.stubFor(
+      wireMockServer.stubFor(
         get(urlPathEqualTo(url))
           .withHeader(HeaderNames.AUTHORIZATION, equalTo("Bearer api-key"))
           .willReturn(
@@ -115,7 +125,7 @@ class RelationshipDetailsConnectorSpec
       val trimmedNino = nino.take(8)
       val url = s"/individuals/relationship/$trimmedNino"
 
-      server.stubFor(
+      wireMockServer.stubFor(
         get(urlPathEqualTo(url))
           .withHeader(HeaderNames.AUTHORIZATION, equalTo("Bearer api-key"))
           .willReturn(
