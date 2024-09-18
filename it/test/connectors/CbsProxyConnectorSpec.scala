@@ -22,24 +22,34 @@ import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.Application
-import play.api.http.Status.{CREATED, INTERNAL_SERVER_ERROR, UNPROCESSABLE_ENTITY}
+import play.api.http.Status.{CREATED, INTERNAL_SERVER_ERROR, OK, UNPROCESSABLE_ENTITY}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
-import util.WireMockHelper
+import uk.gov.hmrc.http.test.WireMockSupport
 
-class CbsProxyConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with IntegrationPatience with WireMockHelper {
+class CbsProxyConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures with IntegrationPatience with WireMockSupport {
 
   private lazy val app: Application =
     GuiceApplicationBuilder()
       .configure(
-        "microservice.services.cbs.port" -> server.port(),
+        "microservice.services.cbs.port" -> wireMockServer.port(),
         "microservice.services.cbs.environment" -> "env",
-        "microservice.services.cbs.auth" -> "auth"
+        "microservice.services.cbs.auth" -> "auth",
+        "microservice.services.internal-auth.port" -> wireMockServer.port()
       )
       .build()
 
   private lazy val connector = app.injector.instanceOf[CbsProxyConnector]
+
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+
+    wireMockServer.stubFor(
+      get(urlMatching("/test-only/token"))
+        .willReturn(aResponse().withStatus(OK))
+    )
+  }
 
   "submit" - {
 
@@ -52,7 +62,7 @@ class CbsProxyConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures 
 
         val body = Json.obj("foo" -> "bar")
 
-        server.stubFor(
+        wireMockServer.stubFor(
           post(urlMatching(url))
             .withRequestBody(equalToJson(Json.stringify(Json.obj())))
             .withHeader("Environment", equalTo("env"))
@@ -74,7 +84,7 @@ class CbsProxyConnectorSpec extends AnyFreeSpec with Matchers with ScalaFutures 
 
     "must fail when there is a connection error" in {
 
-      server.stubFor(
+      wireMockServer.stubFor(
         post(urlMatching(url))
           .withRequestBody(equalToJson(Json.stringify(Json.obj())))
           .withHeader("Environment", equalTo("env"))

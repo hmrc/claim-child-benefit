@@ -16,6 +16,7 @@
 
 package services
 
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, urlMatching}
 import connectors.SdesConnector
 import models.Done
 import models.dmsa._
@@ -28,12 +29,14 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
+import play.api.http.Status.OK
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.{Configuration, Environment}
 import repositories.SubmissionItemRepository
 import uk.gov.hmrc.crypto.{Decrypter, Encrypter, SymmetricCryptoFactory}
 import uk.gov.hmrc.domain.Nino
+import uk.gov.hmrc.http.test.WireMockSupport
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 import utils.NinoGenerator
 
@@ -46,7 +49,7 @@ import scala.concurrent.Future
 class SdesServiceSpec extends AnyFreeSpec with Matchers
   with DefaultPlayMongoRepositorySupport[SubmissionItem]
   with ScalaFutures with IntegrationPatience
-  with MockitoSugar with OptionValues with BeforeAndAfterEach {
+  with MockitoSugar with OptionValues with BeforeAndAfterEach with WireMockSupport {
 
   private val configuration: Configuration =
     Configuration.load(Environment.simple())
@@ -67,13 +70,19 @@ class SdesServiceSpec extends AnyFreeSpec with Matchers
   override def beforeEach(): Unit = {
     super.beforeEach()
     Mockito.reset[Any](mockSdesConnector, mockAuditService)
+
+    wireMockServer.stubFor(
+      get(urlMatching("/test-only/token"))
+        .willReturn(aResponse().withStatus(OK))
+    )
   }
 
-  private val app = GuiceApplicationBuilder()
+  private lazy val app = GuiceApplicationBuilder()
     .configure(
       "services.sdes.information-type" -> "information-type",
       "services.sdes.recipient-or-sender" -> "recipient-or-sender",
-      "services.sdes.object-store-location-prefix" -> "http://prefix/"
+      "services.sdes.object-store-location-prefix" -> "http://prefix/",
+      "microservice.services.internal-auth.port" -> wireMockServer.port()
     )
     .overrides(
       bind[SdesConnector].toInstance(mockSdesConnector),
@@ -84,7 +93,7 @@ class SdesServiceSpec extends AnyFreeSpec with Matchers
 
   private val nino: Nino = Nino(NinoGenerator.randomNino())
 
-  private val service = app.injector.instanceOf[SdesService]
+  private lazy val service = app.injector.instanceOf[SdesService]
 
   private def randomItem = {
     val correlationId = UUID.randomUUID().toString
